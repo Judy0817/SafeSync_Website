@@ -1,14 +1,12 @@
 package main
 
-
-
-
 import (
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -19,6 +17,7 @@ const (
 	user     = "postgres"
 	password = "Judy@0817"
 	dbname   = "accident_dashboard"
+	sslmode  = "disable"
 )
 
 var db *sql.DB
@@ -29,18 +28,16 @@ type RoadFeature struct {
 }
 
 func main() {
-	// Connection string
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode)
 
-	// Open a database connection
 	var err error
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatalf("Error opening database: %v", err)
 	}
+	defer db.Close()
 
-	// Check the connection
 	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
@@ -48,16 +45,16 @@ func main() {
 
 	fmt.Println("Successfully connected to the database!")
 
-	// Set up Gin router
 	router := gin.Default()
 
-	// Define routes
+	// Use CORS middleware
+	router.Use(cors.Default())
+
 	router.GET("/database", getDatabaseName)
 	router.GET("/table_data", getTableData)
 
-	// Start the HTTP server
 	fmt.Println("Server is running on port 8080")
-	log.Fatal(router.Run(":8080"))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func getDatabaseName(c *gin.Context) {
@@ -65,34 +62,38 @@ func getDatabaseName(c *gin.Context) {
 }
 
 func getTableData(c *gin.Context) {
-	// Query the road_features table
 	rows, err := db.Query("SELECT feature, percentage FROM road_features")
 	if err != nil {
-		log.Fatalf("Error querying database: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	// Iterate over the result set and construct RoadFeature objects
-	var roadFeatures []RoadFeature
+	var features []RoadFeature
 	for rows.Next() {
-		var rf RoadFeature
-		if err := rows.Scan(&rf.Feature, &rf.Percentage); err != nil {
-			log.Fatalf("Error scanning row: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		var feature RoadFeature
+		err := rows.Scan(&feature.Feature, &feature.Percentage)
+		if err != nil {
+			log.Fatal(err)
 		}
-		roadFeatures = append(roadFeatures, rf)
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// Check for errors from iterating over rows.
-	if err = rows.Err(); err != nil {
-		log.Fatalf("Error iterating over rows: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	var labels []string
+	var data []float64
+	for _, feature := range features {
+		labels = append(labels, feature.Feature)
+		data = append(data, feature.Percentage)
 	}
 
-	// Respond with the road features as JSON
-	c.JSON(http.StatusOK, roadFeatures)
+	// Log the data to verify it's correct
+	log.Printf("Labels: %v, Data: %v\n", labels, data)
+
+	c.JSON(http.StatusOK, gin.H{
+		"labels": labels,
+		"data":   data,
+	})
 }

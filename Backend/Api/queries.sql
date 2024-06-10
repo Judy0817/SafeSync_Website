@@ -3,6 +3,8 @@
 
 CREATE TABLE road_features(feature varchar(50), percentage float)
 
-INSERT INTO road_features(feature, percentage) VALUES ('Traffic_Signal', 14.79961)
+INSERT INTO road_features(feature, percentage) VALUES ('Roundabout', 0.003221885)
 
 SELECT * FROM road_features;
+
+-- DROP TABLE road_features;
