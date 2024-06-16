@@ -27,6 +27,11 @@ type RoadFeature struct {
 	Percentage float64 `json:"percentage"`
 }
 
+type SeverityDist struct {
+	Severity string `json:"severity"`
+	Count    int    `json:"count"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -51,7 +56,8 @@ func main() {
 	router.Use(cors.Default())
 
 	router.GET("/database", getDatabaseName)
-	router.GET("/table_data", getTableData)
+	router.GET("/road_features", Road_Features)
+	router.GET("/severity_distribution", Severity_Distribution)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -61,7 +67,44 @@ func getDatabaseName(c *gin.Context) {
 	c.String(http.StatusOK, "Database Name: %s\n", dbname)
 }
 
-func getTableData(c *gin.Context) {
+func Severity_Distribution(c *gin.Context) {
+	rows, err := db.Query("SELECT severity, count FROM severity_distribution")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var features []SeverityDist
+	for rows.Next() {
+		var feature SeverityDist
+		err := rows.Scan(&feature.Severity, &feature.Count)
+		if err != nil {
+			log.Fatal(err)
+		}
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var labels []string
+	var data []int
+	for _, feature := range features {
+		labels = append(labels, feature.Severity)
+		data = append(data, int(feature.Count))
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Labels: %v, Data: %v\n", labels, data)
+
+	c.JSON(http.StatusOK, gin.H{
+		"labels": labels,
+		"data":   data,
+	})
+}
+
+func Road_Features(c *gin.Context) {
 	rows, err := db.Query("SELECT feature, percentage FROM road_features")
 	if err != nil {
 		log.Fatal(err)

@@ -38,7 +38,7 @@ const Box1 = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/table_data');
+      const response = await axios.get('http://localhost:8080/road_features');
       const responseData = response.data;
 
       console.log('Fetched data:', responseData);

@@ -8,4 +8,6 @@ INSERT INTO road_features(feature, percentage) VALUES ('Roundabout', 0.003221885
 SELECT * FROM road_features;
 
 SELECT * FROM top_city;
+
+SELECT * FROM severity_distribution;
 -- DROP TABLE road_features;
