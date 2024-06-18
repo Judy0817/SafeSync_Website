@@ -33,6 +33,7 @@ const Box1 = () => {
     }]
   });
 
+  const [top3, setTop3] = useState<{ feature: string, percentage: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
 
@@ -46,7 +47,7 @@ const Box1 = () => {
       setData({
         labels: responseData.labels,
         datasets: [{
-          label: 'Percentage of Accidents Involving Different Road Features',
+          label: '',
           data: responseData.data,
           backgroundColor: 'rgb(153, 102, 255)',
           borderColor: 'rgb(153, 102, 255)',
@@ -61,8 +62,25 @@ const Box1 = () => {
     }
   };
 
+
+  const fetchTop3Data = async () => {
+    try {
+      const response = await axios.get('http://localhost:8080/top3_road_features');
+      const responseData = response.data;
+
+      console.log('Fetched top 3 data:', responseData);
+
+      setTop3(responseData);
+    } catch (err) {
+      console.error('Error fetching top 3 data:', err);
+      setError('Error loading data');
+    }
+  };
+
+
   useEffect(() => {
     fetchData();
+    fetchTop3Data();
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -70,30 +88,27 @@ const Box1 = () => {
 
   return (
     <div>
-      <div className="container">
-        <div className="container1">
-          <h3 className="box1-topic">Revenue Actual vs Target</h3>
-          <div className="twoboxes">
-            <div className="raw1">
-              <h1 className="money">$ 120,000</h1><h1 className="text">Revenue Target</h1>
+    <div className="container">
+      <div className="container1">
+        <h3 className="box1-topic">Top 3 Features</h3>
+        <div className="twoboxes">
+          {top3.map((item, index) => (
+            <div key={index} className={`raw${index + 1}`}>
+              <h1 className="money"> {item.percentage.toLocaleString()} %</h1>
+              <h1 className="text">{item.feature}</h1>
             </div>
-            <div className="raw2">
-              <h1 className="money">$ 120,000</h1><h1 className="text">Revenue Target</h1>
-            </div>
-            <div className="raw3">
-              <h1 className="money">$ 120,000</h1><h1 className="text">Revenue Target</h1>
-            </div>
-          </div>
+          ))}
         </div>
+      </div>
 
-        <div className="container2">
-          <h1 className="box1-topic">2023 Revenue Compare to Previous Year</h1> 
-          <div className="chart">
-            <Bar data={data} />
-          </div>
+      <div className="container2">
+        <h1 className="box1-topic">Percentage of Accidents Involving Different Road Features</h1> 
+        <div className="chart">
+          <Bar data={data} />
         </div>
       </div>
     </div>
+  </div>
   );
 };
 

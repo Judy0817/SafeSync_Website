@@ -58,6 +58,7 @@ func main() {
 	router.GET("/database", getDatabaseName)
 	router.GET("/road_features", Road_Features)
 	router.GET("/severity_distribution", Severity_Distribution)
+	router.GET("/top3_road_features", Top3_RoadFeatures)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -139,4 +140,29 @@ func Road_Features(c *gin.Context) {
 		"labels": labels,
 		"data":   data,
 	})
+}
+
+// New function to get top 3 road features by percentage
+func Top3_RoadFeatures(c *gin.Context) {
+	rows, err := db.Query("SELECT feature, percentage FROM road_features ORDER BY percentage DESC LIMIT 3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var features []RoadFeature
+	for rows.Next() {
+		var feature RoadFeature
+		err := rows.Scan(&feature.Feature, &feature.Percentage)
+		if err != nil {
+			log.Fatal(err)
+		}
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c.JSON(http.StatusOK, features)
 }
