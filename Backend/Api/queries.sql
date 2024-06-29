@@ -10,4 +10,6 @@ SELECT * FROM road_features;
 SELECT * FROM top_city;
 
 SELECT * FROM severity_distribution;
--- DROP TABLE road_features;
+
+SELECT * FROM top_city;
+DROP TABLE accidents_2019;

@@ -62,7 +62,6 @@ const Box1 = () => {
     }
   };
 
-
   const fetchTop3Data = async () => {
     try {
       const response = await axios.get('http://localhost:8080/top3_road_features');
@@ -77,7 +76,6 @@ const Box1 = () => {
     }
   };
 
-
   useEffect(() => {
     fetchData();
     fetchTop3Data();
@@ -86,8 +84,15 @@ const Box1 = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
+  const options = {
+    plugins: {
+      datalabels: {
+        display: false, // Disable datalabels plugin
+      },
+    },
+  };
+
   return (
-    <div>
     <div className="container">
       <div className="container1">
         <h3 className="box1-topic">Top 3 Features</h3>
@@ -104,11 +109,10 @@ const Box1 = () => {
       <div className="container2">
         <h1 className="box1-topic">Percentage of Accidents Involving Different Road Features</h1> 
         <div className="chart">
-          <Bar data={data} />
+          <Bar data={data} options={options} />
         </div>
       </div>
     </div>
-  </div>
   );
 };
 

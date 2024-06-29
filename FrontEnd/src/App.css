@@ -317,6 +317,17 @@ nav {
 
  
 }
+.dashboard-box3-in{
+  width: 1050px;
+  height: 250px;
+  border-radius: 5px;
+  margin-top:60px;
+  background-color: #f1ecec;
+  box-sizing: border-box;
+  text-align: center;
+  justify-content: center;
+}
+
 .dashboard-box4 {
   width: 450px;
   height: 350px;

@@ -1,69 +1,90 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Line } from 'react-chartjs-2';
 
+const AccidentGraphs: React.FC = () => {
+  const [data2019, setData2019] = useState<any>(null);
+  const [data2020, setData2020] = useState<any>(null);
+  const [data2021, setData2021] = useState<any>(null);
 
-import React from 'react';
-import { Doughnut, Pie } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  PointElement,
-  Legend,
-  Tooltip,
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response2019 = await axios.get('http://localhost:8080/accidents_2019');
+        const response2020 = await axios.get('http://localhost:8080/accidents_2020');
+        const response2021 = await axios.get('http://localhost:8080/accidents_2021');
 
-} from 'chart.js';
-import IncomeStatement from './Incomestatement';
+        setData2019({
+          labels: response2019.data.labels,
+          datasets: [
+            {
+              label: 'Accidents in 2019',
+              data: response2019.data.data,
+              borderColor: 'blue',
+              backgroundColor: 'rgba(0, 0, 255, 0.1)',
+              fill: true,
+            },
+          ],
+        });
 
-ChartJS.register(
-  ArcElement,
-  PointElement,
-  Legend,
-  Tooltip,
-);
+        setData2020({
+          labels: response2020.data.labels,
+          datasets: [
+            {
+              label: 'Accidents in 2020',
+              data: response2020.data.data,
+              borderColor: 'green',
+              backgroundColor: 'rgba(0, 255, 0, 0.1)',
+              fill: true,
+            },
+          ],
+        });
 
-function Box4() {
-  const labels = ['January', 'February', 'March', 'April'];
-  const data=  {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Expenses by Month',
-        data: [65, 59, 80, 81],
-        backgroundColor: ['rgb(153, 102, 255)','rgba(211, 133, 222, 0.8)','rgba(222, 133, 179, 0.8)','aqua'],
-        
-      },
-    ],
-  };
+        setData2021({
+          labels: response2021.data.labels,
+          datasets: [
+            {
+              label: 'Accidents in 2021',
+              data: response2021.data.data,
+              borderColor: 'red',
+              backgroundColor: 'rgba(255, 0, 0, 0.1)',
+              fill: true,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
 
-  const legendOptions = {
-    align: 'center', // Align the legend to the center
-    position: 'bottom', // Place the legend at the bottom
-    labels: {
-      boxWidth: 10, // Adjust box width if needed
-      padding: 15, // Adjust padding if needed
-    },
-  };
+    fetchData();
+  }, []);
 
   const options = {
     plugins: {
-      legend: legendOptions,
+      datalabels: {
+        display: false, // Disable datalabels plugin
+      },
     },
+    responsive: true, // Ensure responsiveness of the chart
   };
-  const revenue = 50000;
-  const expenses = 30000;
-
 
   return (
-
-    <div className="container_box3">
-      <div className="container4">
-      <h1 className="box1-topic">2023 revenue compare to previous year</h1> 
-      <div className="chart-Doughnut">
-        <Doughnut data={data} />
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div className="dashboard-box3-in">
+        <h3 className="box1-topic">Accidents in 2019</h3>
+        {data2019 && <Line data={data2019} options={options} />}
       </div>
+      <div className="dashboard-box3-in">
+        <h3 className="box1-topic">Accidents in 2020</h3>
+        {data2020 && <Line data={data2020} options={options} />}
+      </div>
+      <div className="dashboard-box3-in">
+        <h3 className="box1-topic">Accidents in 2021</h3>
+        {data2021 && <Line data={data2021} options={options} />}
       </div>
     </div>
-    
-    
   );
 }
 
-export default Box4;
+export default AccidentGraphs;

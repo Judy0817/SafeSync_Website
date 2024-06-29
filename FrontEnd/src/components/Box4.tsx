@@ -19,20 +19,6 @@ ChartJS.register(
   Tooltip,
 );
 
-// function Box3() {
-//   const labels = ['January', 'February', 'March', 'April'];
-//   const data=  {
-//     labels: labels,
-//     datasets: [
-//       {
-//         label: 'Expenses by Month',
-//         data: [65, 59, 80, 81],
-//         backgroundColor: ['rgb(153, 102, 255)','rgba(211, 133, 222, 0.8)','rgba(222, 133, 179, 0.8)','aqua'],
-        
-//       },
-//     ],
-//   };
-//-----------------------------------------------
   const Box3 = () => {
     const [data, setData] = useState({
       labels: [],
@@ -80,13 +66,21 @@ ChartJS.register(
     if (loading) return <div>Loading...</div>;
     if (error) return <div>{error}</div>;
 
+    const options = {
+      plugins: {
+        datalabels: {
+          display: false, // Disable datalabels plugin
+        },
+      },
+    };
+
   return (
 
     <div className="container_box3">
       <div className="container4">
       <h1 className="box1-topic">Distribution of Accident Severity</h1> 
       <div className="chart-Pie">
-        <Pie data={data} />
+        <Pie data={data} options={options}/>
       </div>
       </div>
     </div>

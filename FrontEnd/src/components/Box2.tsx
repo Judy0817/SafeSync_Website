@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import axios from 'axios';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -20,6 +21,7 @@ ChartJS.register(
   Tooltip,
   Filler
 );
+
 interface CustomDataset {
   label: string;
   data: (number | { x: string; y: number })[];
@@ -31,47 +33,70 @@ interface CustomDataset {
   tension?: number;
 }
 
-function Box2() {
-  const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-  const data: { labels: string[]; datasets: CustomDataset[] } = {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Expenses by Month',
-        data: [65, 59, 80, 81, 56, 55, 40],
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        borderColor: 'rgb(153, 102, 255)',
-        borderWidth: 2,
-        fill: true,
-        pointBorderColor: 'black',
-        
-      },
-    ],
-  };
+const Box2: React.FC = () => {
+  const [data, setData] = useState<{ labels: string[], datasets: CustomDataset[] }>({
+    labels: [],
+    datasets: [{
+      label: 'Percentage of Accidents Involving Different Road Features',
+      data: [],
+      backgroundColor: 'rgb(153, 102, 255)',
+      borderColor: 'rgb(153, 102, 255)',
+      borderWidth: 1,
+      fill: true,
+    }]
+  });
+
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/top_city');
+        const responseData = response.data;
+
+        console.log('Fetched data:', responseData);
+
+        setData({
+          labels: responseData.labels,
+          datasets: [{
+            label: '',
+            data: responseData.data,
+            backgroundColor: 'rgba(153, 102, 255, 0.5)',
+            borderColor: 'rgb(153, 102, 255)',
+            borderWidth: 1,
+            fill: true,
+          }]
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Error loading data');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   const options = {
     plugins: {
-      legend: {
-        display: true,
-      },
-    },
-    scales: {
-      y: {
-        // min:3,
-        // max:6
+      datalabels: {
+        display: false, // Disable datalabels plugin
       },
     },
   };
 
   return (
-
     <div className="container3">
-      <h1 className="box1-topic">2023 revenue compare to previous year</h1> 
+      <h1 className="box1-topic">No Of Accidents In Top 20 Cities</h1>
       <div className="chart-Line">
         <Line data={data} options={options} />
       </div>
     </div>
-    
   );
 }
 
