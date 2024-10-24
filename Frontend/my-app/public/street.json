@@ -1,0 +1,31 @@
+{
+    "streets": [
+      {
+        "name": "Main St",
+        "weather": {
+          "condition": "Rain",
+          "temperature": 85,
+          "humidity": 90
+        },
+        "roadFeatures": {
+          "potholes": true,
+          "speedBumps": false
+        },
+        "severity": 5
+      },
+      {
+        "name": "Elm St",
+        "weather": {
+          "condition": "Clear",
+          "temperature": 70,
+          "humidity": 50
+        },
+        "roadFeatures": {
+          "potholes": false,
+          "speedBumps": true
+        },
+        "severity": 6
+      }
+    ]
+  }
+  

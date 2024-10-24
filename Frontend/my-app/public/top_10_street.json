@@ -1,0 +1,73 @@
+{
+    "Street A": {
+      "Bump": true,
+      "Crossing": true,
+      "Give_Way": false,
+      "Junction": true,
+      "No_Exit": false,
+      "Railway": false,
+      "Roundabout": false,
+      "Station": false,
+      "Stop": true,
+      "Traffic_Calming": true,
+      "Traffic_Signal": true,
+      "severity": 8
+    },
+    "City Bg": {
+      "Bump": false,
+      "Crossing": true,
+      "Give_Way": true,
+      "Junction": false,
+      "No_Exit": true,
+      "Railway": true,
+      "Roundabout": true,
+      "Station": false,
+      "Stop": true,
+      "Traffic_Calming": false,
+      "Traffic_Signal": true,
+      "severity": 12
+    },
+    "City C": {
+      "Bump": true,
+      "Crossing": false,
+      "Give_Way": true,
+      "Junction": true,
+      "No_Exit": false,
+      "Railway": false,
+      "Roundabout": true,
+      "Station": true,
+      "Stop": false,
+      "Traffic_Calming": true,
+      "Traffic_Signal": false,
+      "severity": 7
+    },
+    "City D": {
+      "Bump": false,
+      "Crossing": true,
+      "Give_Way": false,
+      "Junction": true,
+      "No_Exit": false,
+      "Railway": true,
+      "Roundabout": true,
+      "Station": false,
+      "Stop": true,
+      "Traffic_Calming": true,
+      "Traffic_Signal": true,
+      "severity": 10
+    },
+    "City E": {
+      "Bump": true,
+      "Crossing": false,
+      "Give_Way": true,
+      "Junction": false,
+      "No_Exit": false,
+      "Railway": false,
+      "Roundabout": false,
+      "Station": true,
+      "Stop": true,
+      "Traffic_Calming": true,
+      "Traffic_Signal": false,
+      "severity": 5
+    }
+  }
+  

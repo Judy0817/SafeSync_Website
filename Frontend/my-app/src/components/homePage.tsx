@@ -7,8 +7,11 @@ import Box4 from './Box4'
 import PieChart from './Box3'
 import Box5 from './Box5'
 import Box3 from './Box3'
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+
+
   return (
     <div className='App'>
       <Header />
@@ -16,7 +19,7 @@ const HomePage = () => {
       <div className='dashboard'>
       <h1 className='heading_home'>US Road Accident Casualities Tracking Dashboard</h1>
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
-
+      
        <div className="dash1">
        <div className="dashboard-box1">
           <Box1 />

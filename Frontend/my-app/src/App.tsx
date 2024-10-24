@@ -6,6 +6,8 @@ import HomePage from "./components/homePage";
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import Notify from "./components/notify";
+import AnalyzeData from "./components/analyzeData";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -30,8 +32,12 @@ function App() {
                     element={<First />} />
                 <Route path="/forgotPassword"
                     element={<Second />} />
+                <Route path="/notify"
+                    element={<Notify />} />
                 <Route path="/homePage"
                     element={<HomePage />} />
+                <Route path="/analyzeData"
+                    element={<AnalyzeData />} />
                 <Route path="/"
                     element={<Main />} />
 

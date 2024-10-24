@@ -269,6 +269,25 @@ nav {
   
 }
 
+.button-analyzedata{
+  display: inline-block;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  background-color: #0de4c7;
+  color: #ffffff;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: fixed;
+  right: 10%;
+  height: 4%;
+  width: 7%;
+  
+}
+
 .dash1{
   display: flex;
   flex-wrap: wrap;

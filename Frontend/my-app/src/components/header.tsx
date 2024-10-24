@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { faArrowLeft, faBars } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Link, useNavigate } from 'react-router-dom';
+import { faArrowLeft, faBars, faBell } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon,  } from '@fortawesome/react-fontawesome';
 import { faChartLine, faLightbulb, faGem, faCar, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 
 const Header: React.FC = () => {
@@ -14,6 +14,13 @@ const Header: React.FC = () => {
   const hideDropdown = () => {
     setDropdownVisibility(false);
   };
+
+  const navigate = useNavigate();
+  const goToAnalyzeData = () => {
+
+    // This will navigate to second component
+    navigate('/analyzeData');
+};
 
   return (
     <header>
@@ -145,8 +152,10 @@ const Header: React.FC = () => {
             <Link to="/">Home</Link>
             <Link to="/about">About</Link>
             <Link to="/">Profile</Link>
-            <Link to="/about">Contact</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/notify"><FontAwesomeIcon icon={faBell} /></Link>
             <div className="list">
+            <button onClick={goToAnalyzeData} className='button-analyzedata'>Analyze Data</button>
             <button type="button" className='button-signOut'>Sign Out</button>
            
             </div>

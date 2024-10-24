@@ -1,0 +1,30 @@
+.alerts-container {
+    margin-top: 20px;
+    padding: 10px;
+  }
+  
+  .alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  /* Add custom styles for the alert containers */
+  .alert {
+    border: 1px solid black;
+    transition: background-color 0.5s ease;
+  }
+  
+  .alert.red {
+    background-color: red;
+    color: white;
+  }
+  
+  .alert.yellow {
+    background-color: yellow;
+    color: black;
+  }
+  
