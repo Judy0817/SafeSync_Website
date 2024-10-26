@@ -53,7 +53,7 @@ const AlertSystem = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       processAlerts(streetData);
-    }, 3600000); // Check every 60 minutes (1 hour = 3600000 milliseconds)
+    }, 60); // Check every 60 minutes (1 hour = 3600000 milliseconds)
 
     return () => clearInterval(intervalId); // Clear interval when the component is unmounted
   }, [streetData]);
