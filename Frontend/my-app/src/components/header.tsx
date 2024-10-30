@@ -45,30 +45,37 @@ const Header: React.FC = () => {
         Graph Sub-Topic
       </Link>
 
-      <div className="main-topic">PRO VERSION</div>
-      <Link to="/" className="sub-topic with-icon">
+      <div className="main-topic">Accident Overview</div>
+      <Link to="/total_accident" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        Light Sub-Topic
+        Total Accidents
         
       </Link>
       <Link to="/" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        Light Sub-Topic
+        City / Area
         
       </Link>
       <Link to="/" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        Light Sub-Topic
+        Top 5 Accidents
+        
+      </Link>
+      <Link to="/" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Severity
         
       </Link>
 
-      <div className="main-topic">UI COMPONENTS</div>
+      <div className="main-topic">Weather Impact Analysis</div>
       <div className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faGem} />
@@ -94,7 +101,7 @@ const Header: React.FC = () => {
         Diamond Sub-Topic
       </div>
 
-      <div className="main-topic">WIDGETS</div>
+      <div className="main-topic">Road Feature Impact Analysis</div>
       <div className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faCar} />
@@ -108,7 +115,7 @@ const Header: React.FC = () => {
         Car Sub-Topic
       </div>
 
-      <div className="main-topic">CHARTS</div>
+      <div className="main-topic">Time based Trends</div>
       <div className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faPencilAlt} />

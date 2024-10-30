@@ -51,6 +51,11 @@ type WeatherCondition struct {
 	Count     int
 }
 
+type TotalAccident struct {
+	Year  float64 `json:"year"`
+	Count int     `json:"count"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -83,6 +88,7 @@ func main() {
 	router.GET("/accidents_2021", getAccidentsDataHandler(2021))
 	router.GET("/weather_conditions", WeatherConditions)
 	router.GET("/top_city", Top_city)
+	router.GET("/total_accidents", TotalAccidents)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -308,6 +314,51 @@ func Top_city(c *gin.Context) {
 	// Log the data to verify it's correct
 	log.Printf("Labels: %v, Data: %v\n", labels, data)
 
+	c.JSON(http.StatusOK, gin.H{
+		"labels": labels,
+		"data":   data,
+	})
+}
+
+// Handler function to get the total accidents by city (you can adjust this logic)
+func TotalAccidents(c *gin.Context) {
+	// Query the database for total accidents
+	rows, err := db.Query("SELECT year, count FROM total_accidents")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	// Slice to hold the results
+	var years []TotalAccident
+	for rows.Next() {
+		var year TotalAccident
+		err := rows.Scan(&year.Year, &year.Count)
+		if err != nil {
+			log.Fatal(err)
+		}
+		years = append(years, year)
+	}
+
+	// Check for any errors during iteration
+	err = rows.Err()
+	if err != nil {
+
+		log.Fatal(err)
+	}
+
+	// Prepare labels and data for JSON response
+	var labels []string
+	var data []float64
+	for _, year := range years {
+		labels = append(labels, fmt.Sprintf("%.0f", year.Year)) // Convert year to string without decimal
+		data = append(data, float64(year.Count))                // Count already an integer, convert to float64
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Labels: %v, Data: %v\n", labels, data)
+
+	// Send JSON response
 	c.JSON(http.StatusOK, gin.H{
 		"labels": labels,
 		"data":   data,

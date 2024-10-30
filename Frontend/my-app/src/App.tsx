@@ -8,6 +8,7 @@ import HomePage from "./components/homePage";
 import { initializeApp } from "firebase/app";
 import Notify from "./components/notify";
 import AnalyzeData from "./components/analyzeData";
+import TotalAccident from "./components/total_accident";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -38,6 +39,8 @@ function App() {
                     element={<HomePage />} />
                 <Route path="/analyzeData"
                     element={<AnalyzeData />} />
+                <Route path="/total_accident"
+                    element={<TotalAccident />} />
                 <Route path="/"
                     element={<Main />} />
 

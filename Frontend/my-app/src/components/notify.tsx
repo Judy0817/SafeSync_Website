@@ -7,26 +7,48 @@ interface Street {
     condition: string;
     temperature: number;
     humidity: number;
-  };
-  roadFeatures: {
-    potholes: boolean;
-    speedBumps: boolean;
+    windChill: number;
+    pressure: number;
+    visibility: number;
+    windDirection: string;
+    windSpeed: number;
+    precipitation: number;
   };
   severity: number;
 }
 
 const AlertSystem = () => {
-  // State to store street data
-  const [streetData, setStreetData] = useState<Street[]>([]);
-  const [alerts, setAlerts] = useState<Street[]>([]); // State to store active alerts
+  const [streetData, setStreetData] = useState<Street[]>([]); // All street data
+  const [alerts, setAlerts] = useState<Street[]>([]); // Alerts for the selected street
+  const [searchTerm, setSearchTerm] = useState(''); // Search input
+  const [filteredStreets, setFilteredStreets] = useState<Street[]>([]); // Filtered streets based on search
+  const [selectedStreet, setSelectedStreet] = useState<Street | null>(null); // Selected street from search
 
-  // Fetch street data (mocked from a JSON file)
+  // Fetch street data from JSON format
   useEffect(() => {
     const fetchStreetData = async () => {
       try {
-        const response = await fetch('/street.json');
+        const response = await fetch('/average_street_weather.json');
         const data = await response.json();
-        setStreetData(data.streets);
+
+        // Convert JSON object to array of Street objects
+        const streetsArray = Object.entries(data).map(([name, values]: [string, any]) => ({
+          name,
+          weather: {
+            condition: values.Weather_Condition,
+            temperature: values['Temperature(F)'],
+            humidity: values['Humidity(%)'],
+            windChill: values['Wind_Chill(F)'],
+            pressure: values['Pressure(in)'],
+            visibility: values['Visibility(mi)'],
+            windDirection: values.Wind_Direction,
+            windSpeed: values['Wind_Speed(mph)'],
+            precipitation: values['Precipitation(in)'],
+          },
+          severity: values.Severity,
+        }));
+
+        setStreetData(streetsArray);
       } catch (error) {
         console.error('Error fetching street data:', error);
       }
@@ -34,61 +56,85 @@ const AlertSystem = () => {
     fetchStreetData();
   }, []);
 
-  // Function to trigger alerts based on severity
-  const triggerAlert = (street: Street) => {
-    if (street.severity >= 4) {
-      setAlerts([street]); // Clear past alerts and add only the new one
-    }
-  };
-
-  // Process the alerts for all streets
-  const processAlerts = (streets: Street[]) => {
-    setAlerts([]); // Clear all past alerts before processing new ones
-    streets.forEach((street) => {
-      triggerAlert(street);
-    });
-  };
-
-  // Set up a continuous check for alerts (every hour)
+  // Update filtered streets based on search term
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      processAlerts(streetData);
-    }, 60); // Check every 60 minutes (1 hour = 3600000 milliseconds)
+    if (searchTerm) {
+      const matches = streetData.filter(street =>
+        street.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredStreets(matches);
+    } else {
+      setFilteredStreets([]);
+    }
+  }, [searchTerm, streetData]);
 
-    return () => clearInterval(intervalId); // Clear interval when the component is unmounted
-  }, [streetData]);
+  // Handle street selection and display alerts for the selected street
+  const handleStreetSelect = (street: Street) => {
+    setSelectedStreet(street);
+    setAlerts(street.severity >= 4 ? [street] : []); // Trigger alert if severity >= 4
+    setSearchTerm(''); // Clear search term after selection
+    setFilteredStreets([]); // Clear filtered results after selection
+  };
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>Street Alert Monitoring</h2>
-      <p>Monitoring streets and triggering alerts based on severity...</p>
+      <p>Search and select a street to view alerts based on severity...</p>
 
-      {/* Display street data for reference */}
-      {/* <ul style={{ listStyle: 'none', padding: 0 }}>
-        {streetData.map((street) => (
-          <li key={street.name}>
-            {street.name} - Severity: {street.severity}
-          </li>
-        ))}
-      </ul> */}
+      {/* Search Bar for selecting a street */}
+      <input
+        type="text"
+        placeholder="Search street..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
+      />
 
-      {/* Display alert notifications */}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {alerts.length > 0 ? (
-          alerts.map((alert, index) => (
-            <li key={index} style={getAlertStyle(alert.severity)}>
-              <div>
-                <strong>{alert.name} has a severity of {alert.severity}!</strong>
-              </div>
-              <div>Weather: {alert.weather.condition}</div>
-              <div>Temperature: {alert.weather.temperature}°C</div>
-              <div>Humidity: {alert.weather.humidity}%</div>
+      {/* Dropdown for filtered streets */}
+      {filteredStreets.length > 0 && (
+        <ul style={{ listStyle: 'none', padding: 0, border: '1px solid #ddd', borderRadius: '4px' }}>
+          {filteredStreets.map((street, index) => (
+            <li
+              key={index}
+              onClick={() => handleStreetSelect(street)}
+              style={{ padding: '10px', cursor: 'pointer', backgroundColor: '#f8f9fa', borderBottom: '1px solid #ddd' }}
+            >
+              {street.name}
             </li>
-          ))
-        ) : (
-          <li>No alerts to display</li>
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
+
+      {/* Display alert for the selected street */}
+      {selectedStreet ? (
+        <div style={{ marginTop: '20px' }}>
+          <h3>Alerts for {selectedStreet.name}</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {alerts.length > 0 ? (
+              alerts.map((alert, index) => (
+                <li key={index} style={getAlertStyle(alert.severity)}>
+                  <div>
+                    <strong>{alert.name} has a severity of {alert.severity}!</strong>
+                  </div>
+                  <div>Weather: {alert.weather.condition}</div>
+                  <div>Temperature: {alert.weather.temperature}°F</div>
+                  <div>Humidity: {alert.weather.humidity}%</div>
+                  <div>Wind Chill: {alert.weather.windChill}°F</div>
+                  <div>Pressure: {alert.weather.pressure} in</div>
+                  <div>Visibility: {alert.weather.visibility} mi</div>
+                  <div>Wind Direction: {alert.weather.windDirection}</div>
+                  <div>Wind Speed: {alert.weather.windSpeed} mph</div>
+                  <div>Precipitation: {alert.weather.precipitation} in</div>
+                </li>
+              ))
+            ) : (
+              <li>No alerts to display for this street</li>
+            )}
+          </ul>
+        </div>
+      ) : (
+        <p>Select a street to view alerts</p>
+      )}
     </div>
   );
 };

@@ -25,17 +25,33 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
   const [featureCombinations, setFeatureCombinations] = useState<any>({});
   const [selectedCity, setSelectedCity] = useState('00-199 FAIR LAWN PKWY');
   const [searchTerm, setSearchTerm] = useState('');
-  const [accidentRisk, setAccidentRisk] = useState(5); // Default severity
+  const [initialSeverity, setInitialSeverity] = useState(5);
+  const [accidentRisk, setAccidentRisk] = useState(5);
 
-  // Fetch the road feature data from the public directory
+  // Feature names to display
+  const featureNames = [
+    "Bump",
+    "Crossing",
+    "Give_Way",
+    "Junction",
+    "No_Exit",
+    "Railway",
+    "Roundabout",
+    "Station",
+    "Stop",
+    "Traffic_Calming",
+    "Traffic_Signal",
+  ];
+
+  // Helper function to format feature names consistently
+  // Fetch data from JSON files
   useEffect(() => {
     fetch('/street_road_features_with_severity.json')
       .then((response) => response.json())
       .then((data) => setRoadData(data))
       .catch((error) => console.error('Error fetching the road feature data:', error));
 
-    // Fetch the road feature combinations data
-    fetch('/average_severities_combinations.json') // Adjust the path to your JSON file
+    fetch('/average_severities_combinations.json')
       .then((response) => response.json())
       .then((data) => setFeatureCombinations(data))
       .catch((error) => console.error('Error fetching the road feature combinations data:', error));
@@ -45,39 +61,38 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
     setRoadData((prevRoadData: { [x: string]: { [x: string]: any; }; }) => {
       const updatedCityData = {
         ...prevRoadData[selectedCity],
-        [feature]: !prevRoadData[selectedCity][feature], // Toggle the checkbox state
+        [feature]: !prevRoadData[selectedCity][feature],
       };
 
-      // Update the roadData state
-      return {
+      const updatedRoadData = {
         ...prevRoadData,
         [selectedCity]: updatedCityData,
       };
-    });
 
-    // Recalculate risk severity after updating the feature
-    setAccidentRisk(calculateRisk(roadData[selectedCity], featureCombinations));
+      const newSeverity = calculateRisk(updatedCityData, featureCombinations);
+      setAccidentRisk(newSeverity);
+
+      return updatedRoadData;
+    });
   };
 
   const calculateRisk = (features: any, featureCombinations: any): number => {
-    const activeFeatures = Object.keys(features).filter(feature => features[feature]);
-    console.log("Active Features:", activeFeatures); // Debugging log
-
-    // Return default severity if no features are active
-    if (activeFeatures.length === 0) return 5; 
-
-    // Generate keys for single features and combinations
+    const activeFeatures = Object.keys(features)
+      .filter((feature) => features[feature])
+      .map((feature) => featureNames.includes(feature) ? feature : feature); // Format feature names to match JSON keys
+  
+    if (activeFeatures.length === 0) return initialSeverity;
+  
     const allKeys: string[] = [];
     activeFeatures.forEach((feature) => {
       allKeys.push(`${feature} = True`);
     });
-
-    // Function to create combinations of features
+  
     const createCombinations = (arr: string[]): string[] => {
       const combinations: string[] = [];
       const n = arr.length;
-
-      for (let i = 1; i < (1 << n); i++) { 
+  
+      for (let i = 1; i < (1 << n); i++) {
         const combination: string[] = [];
         for (let j = 0; j < n; j++) {
           if (i & (1 << j)) {
@@ -90,33 +105,42 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
       }
       return combinations;
     };
-
-    // Add combinations of two or more active features
+  
     allKeys.push(...createCombinations(activeFeatures));
-
-    console.log("All Keys to Check:", allKeys); // Debugging log
-
-    // Lookup the severity based on the generated keys
-    let severity = 5; // Default severity if no matches are found
+  
+    let severity = initialSeverity; // Default to initial severity if no match found
     for (const key of allKeys) {
       if (featureCombinations[key] !== undefined) {
         severity = featureCombinations[key];
-        console.log("Found Severity for Key:", key, "Severity:", severity); // Debugging log
-        break; // Use the first matching severity found
+        break; // Use the first matching severity value
       }
     }
-
+  
     return severity;
   };
 
+  const handleCityChange = (newCity: string) => {
+    setSelectedCity(newCity);
+    setSearchTerm(newCity);
+    const cityData = roadData[newCity];
+    
+    // Get Average_Severity from the city data
+    const severity = cityData?.Average_Severity || 5; // Default if not found
+    setInitialSeverity(severity); // Set the initial severity based on the Average_Severity
+    setAccidentRisk(severity); // Update the accident risk with the same value
+  };
+
   if (!roadData[selectedCity] || !Object.keys(featureCombinations).length) {
-    return <Typography>Loading...</Typography>; // Loading state while data is being fetched
+    return <Typography>Loading...</Typography>;
   }
 
-  const featureLabels = Object.keys(roadData[selectedCity]).filter((feature) => feature !== 'accidentRisk' && feature !== 'Average_Severity');
-  const featureValues = featureLabels.map((feature) => (roadData[selectedCity][feature] ? 1 : 0)); // Use 1 for enabled, 0 for disabled
+  const featureLabels = Object.keys(roadData[selectedCity]).filter(
+    (feature) => feature !== 'accidentRisk' && feature !== 'Average_Severity'
+  );
+  const featureValues = featureLabels.map((feature) =>
+    roadData[selectedCity][feature] ? 1 : 0
+  );
 
-  // Filter and sort city names based on the search term
   const filteredCities = Object.keys(roadData)
     .filter((city) => city.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.localeCompare(b));
@@ -134,20 +158,18 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
           value={selectedCity}
           onChange={(event, newValue) => {
             if (newValue) {
-              setSelectedCity(newValue);
-              setSearchTerm(newValue); // Update search term to reflect selected city
-              setAccidentRisk(calculateRisk(roadData[newValue], featureCombinations)); // Recalculate risk for the new city
+              handleCityChange(newValue);
             }
           }}
           inputValue={searchTerm}
           onInputChange={(event, newInputValue) => {
-            setSearchTerm(newInputValue); // Update search term as user types
+            setSearchTerm(newInputValue);
           }}
           renderInput={(params) => (
             <TextField {...params} label="Search and Select City" variant="outlined" />
           )}
-          getOptionLabel={(option) => option} // Display the city name
-          sx={{ mb: 2 }} // Additional styles can be added here
+          getOptionLabel={(option) => option}
+          sx={{ mb: 2 }}
         />
       </FormControl>
 
@@ -168,7 +190,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
                         onChange={() => toggleFeature(feature)}
                       />
                     }
-                    label={feature.replace('_', ' ')}
+                    label={featureNames[featureNames.indexOf(feature)]}
                   />
                 </Grid>
               ) : null
@@ -177,17 +199,20 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
         </FormGroup>
 
         <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-          Severity: {accidentRisk}
+          Severity: {roadData[selectedCity]?.Average_Severity || 'Loading...'}
+        </Typography>
+        <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
+          Predicted Severity: {accidentRisk}
         </Typography>
       </Paper>
 
+      {/* New Box to display feature names */}
+
+
       <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Feature Status Chart
-        </Typography>
         <Bar
           data={{
-            labels: featureLabels.map((feature) => feature.replace('_', ' ')),
+            labels: featureLabels.map((feature) => featureNames[featureNames.indexOf(feature)]),
             datasets: [
               {
                 label: 'Road Features',
@@ -211,8 +236,8 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
               },
             },
           }}
-          width={300} // Set width of the chart
-          height={200} // Set height of the chart
+          width={300}
+          height={200}
         />
       </Box>
 
