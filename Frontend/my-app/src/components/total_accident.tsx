@@ -8,6 +8,7 @@ import Box5 from './Box5'
 import Box3 from './Box3'
 import { useNavigate } from 'react-router-dom';
 import Box6 from './Box6'
+import Box7 from './Box7'
 
 const TotalAccident = () => {
 
@@ -29,8 +30,8 @@ const TotalAccident = () => {
           <Box2 />
         </div>
 
-        <div className="dashboard-box3">
-          <Box3 />
+        <div className="dashboard-box7">
+          <Box7 />
         </div>
 
         <div className="dashboard-box4">

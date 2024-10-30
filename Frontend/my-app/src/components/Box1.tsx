@@ -85,9 +85,17 @@ const Box1 = () => {
   if (error) return <div>{error}</div>;
 
   const options = {
+    responsive: true,
     plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      tooltip: {
+        enabled: true, // Enable tooltip, but not displaying values on bars
+      },
+      // Disable data labels
       datalabels: {
-        display: false, // Disable datalabels plugin
+        display: false, // Make sure data labels do not show on the bars
       },
     },
   };

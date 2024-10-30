@@ -9,14 +9,19 @@ import {
   LinearScale,
   Legend,
   Tooltip,
+  // Import datalabels plugin if you are using it
+  // Datalabels,
 } from 'chart.js';
 
+// Register the necessary components
 ChartJS.register(
   BarElement,
   CategoryScale,
   LinearScale,
   Legend,
   Tooltip,
+  // Register the datalabels plugin if you use it
+  // Datalabels,
 );
 
 const Box6 = () => {
@@ -33,6 +38,9 @@ const Box6 = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<null | string>(null);
+  const [average, setAverage] = useState<number | null>(null);
+  const [median, setMedian] = useState<number | null>(null);
+  const [percentageChanges, setPercentageChanges] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -41,6 +49,28 @@ const Box6 = () => {
 
       console.log('Fetched data:', responseData);
 
+      const accidentData = responseData.data;
+
+      // Calculate Average
+      const avg = accidentData.reduce((sum: number, val: number) => sum + val, 0) / accidentData.length;
+      setAverage(avg);
+
+      // Calculate Median
+      const sortedData = [...accidentData].sort((a, b) => a - b);
+      const medianValue = sortedData.length % 2 === 0
+        ? (sortedData[sortedData.length / 2 - 1] + sortedData[sortedData.length / 2]) / 2
+        : sortedData[Math.floor(sortedData.length / 2)];
+      setMedian(medianValue);
+
+      // Calculate Year-to-Year Percentage Change
+      const percentChanges = accidentData.slice(1).map((currentValue: number, i: number) => {
+        const previousValue = accidentData[i];
+        const change = ((currentValue - previousValue) / previousValue * 100).toFixed(2);
+        return `${responseData.labels[i + 1]}: ${change}% change`;
+      });
+      setPercentageChanges(percentChanges);
+
+      // Update Chart Data
       setData({
         labels: responseData.labels,
         datasets: [{
@@ -73,18 +103,29 @@ const Box6 = () => {
         position: 'top' as const,
       },
       tooltip: {
-        callbacks: {
-          label: (tooltipItem: { label: any; raw: any; }) => `Year: ${tooltipItem.label}, Count: ${tooltipItem.raw}`,
-        },
+        enabled: true, // Enable tooltip, but not displaying values on bars
+      },
+      // Disable data labels
+      datalabels: {
+        display: false, // Make sure data labels do not show on the bars
       },
     },
   };
 
   return (
     <div className="container_box3">
-      <div className="container4">
-        <h1 className="box1-topic">Total Accidents Per Year</h1>
-        <div className="chart-Bar">
+      <div className="statistics-summary" style={{ display: 'flex' }}>
+        <div className="left-side" style={{ flex: 1, paddingRight: '10px' }}>
+          <p><strong>Average Accidents:</strong> {average?.toFixed(2)}</p>
+          <p><strong>Median Accidents:</strong> {median}</p>
+          <ul>
+            {percentageChanges.map((change, index) => (
+              <li key={index}>{change}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="container2">
+        <h1 className="box1-topic">Total Accidents Per Year</h1> 
           <Bar data={data} options={options} />
         </div>
       </div>

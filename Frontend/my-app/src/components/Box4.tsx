@@ -68,8 +68,11 @@ ChartJS.register(
 
     const options = {
       plugins: {
-        datalabels: {
-          display: false, // Disable datalabels plugin
+        legend: {
+          display: true,
+        },
+        tooltip: {
+          enabled: true,
         },
       },
     };

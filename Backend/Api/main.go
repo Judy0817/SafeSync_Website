@@ -34,6 +34,11 @@ type TopCity struct {
 	Count float64 `json:"accident_count"`
 }
 
+type TopStreet struct {
+	Street string  `json:"street"`
+	Count  float64 `json:"accident_count"`
+}
+
 type SeverityDist struct {
 	Severity string `json:"severity"`
 	Count    int    `json:"count"`
@@ -86,8 +91,11 @@ func main() {
 	router.GET("/accidents_2019", getAccidentsDataHandler(2019))
 	router.GET("/accidents_2020", getAccidentsDataHandler(2020))
 	router.GET("/accidents_2021", getAccidentsDataHandler(2021))
+	router.GET("/accidents_2022", getAccidentsDataHandler(2022))
+	router.GET("/accidents_2023", getAccidentsDataHandler(2023))
 	router.GET("/weather_conditions", WeatherConditions)
 	router.GET("/top_city", Top_city)
+	router.GET("/top_street", Top_street)
 	router.GET("/total_accidents", TotalAccidents)
 
 	fmt.Println("Server is running on port 8080")
@@ -309,6 +317,43 @@ func Top_city(c *gin.Context) {
 	for _, city := range cities {
 		labels = append(labels, city.City)
 		data = append(data, city.Count)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Labels: %v, Data: %v\n", labels, data)
+
+	c.JSON(http.StatusOK, gin.H{
+		"labels": labels,
+		"data":   data,
+	})
+}
+
+func Top_street(c *gin.Context) {
+	rows, err := db.Query("SELECT street, accident_count FROM top_street")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var streets []TopStreet
+	for rows.Next() {
+		var city TopStreet
+		err := rows.Scan(&city.Street, &city.Count)
+		if err != nil {
+			log.Fatal(err)
+		}
+		streets = append(streets, city)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var labels []string
+	var data []float64
+	for _, street := range streets {
+		labels = append(labels, street.Street)
+		data = append(data, street.Count)
 	}
 
 	// Log the data to verify it's correct

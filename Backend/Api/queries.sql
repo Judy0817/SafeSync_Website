@@ -14,4 +14,4 @@ SELECT * FROM severity_distribution;
 SELECT * FROM top_city;
 DROP TABLE accidents_2019;
 
-SELECT * FROM total_accidents;
+SELECT * FROM accidents_2023;
