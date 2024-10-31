@@ -166,7 +166,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
             setSearchTerm(newInputValue);
           }}
           renderInput={(params) => (
-            <TextField {...params} label="Search and Select City" variant="outlined" />
+            <TextField {...params} label="Search and Select Street" variant="outlined" />
           )}
           getOptionLabel={(option) => option}
           sx={{ mb: 2 }}
@@ -175,7 +175,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
 
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="subtitle1" gutterBottom>
-          Selected City: {selectedCity}
+          Selected Street: {selectedCity}
         </Typography>
 
         <FormGroup>

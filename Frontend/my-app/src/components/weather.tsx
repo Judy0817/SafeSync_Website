@@ -5,6 +5,8 @@ import Box7 from './Box7'
 import Box8 from './Box8'
 import Box9 from './Box9'
 import Box5 from './Box5'
+import Box10 from './Box10'
+import Box11 from './Box11'
 
 const Weather = () => {
 
@@ -27,11 +29,11 @@ const Weather = () => {
         </div>
 
         <div className="dashboard-box2">
-          <Box7 />
+          <Box10 />
         </div>
 
         <div className="dashboard-box2">
-          <Box8 />
+          <Box11 />
         </div>
 
        </div>

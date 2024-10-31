@@ -1,1 +1,1 @@
-weather_feature
+average_wind_speed

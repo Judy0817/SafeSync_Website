@@ -59,6 +59,13 @@ type WeatherCondition struct {
 	Condition string
 	Count     int
 }
+type SeverityWeatherCondition struct {
+	Severity    int     `json:"severity"`
+	Temperature float64 `json:"temperature"`
+	Humidity    float64 `json:"humidity"`
+	WindSpeed   float64 `json:"wind_speed"`
+	Visibility  float64 `json:"visibility"`
+}
 type WeatherConditionCount struct {
 	All_Values string  `json:"all_values"`
 	Count      float64 `json:"count"`
@@ -67,6 +74,12 @@ type WeatherConditionCount struct {
 type TotalAccident struct {
 	Year  float64 `json:"year"`
 	Count int     `json:"count"`
+}
+
+type AverageWindSpeed struct {
+	TimeOfDay        string  `json:"time_of_day"`
+	Severity         int     `json:"severity"`
+	AverageWindSpeed float64 `json:"average_wind_speed"`
 }
 
 func main() {
@@ -108,6 +121,8 @@ func main() {
 	router.GET("/top_10_streets_per_city", topStreetPerCity)
 	router.GET("/total_accidents", TotalAccidents)
 	router.GET("/get_cities", getCities)
+	router.GET("/average_weather_severity", AverageWeatherConditions)
+	router.GET("/average_wind_speed", AverageWindSpeeds)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -542,5 +557,85 @@ func WeatherConditionsCount(c *gin.Context) {
 		"weather_feature": weather_feature,
 		"labels":          labels,
 		"data":            data,
+	})
+}
+
+func AverageWeatherConditions(c *gin.Context) {
+	// Query the database for average weather conditions by severity
+	rows, err := db.Query("SELECT severity, temperature, humidity, wind_speed, visibility FROM average_weather_conditions_by_severity")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	// Slice to store the weather conditions
+	var conditions []SeverityWeatherCondition
+	for rows.Next() {
+		var condition SeverityWeatherCondition
+		err := rows.Scan(&condition.Severity, &condition.Temperature, &condition.Humidity, &condition.WindSpeed, &condition.Visibility)
+		if err != nil {
+			log.Fatal(err)
+		}
+		conditions = append(conditions, condition)
+	}
+
+	// Check for errors after row iteration
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Separate data for grouped bar chart
+	var severities []int
+	var temperatures, humidities, windSpeeds, visibilities []float64
+	for _, condition := range conditions {
+		severities = append(severities, condition.Severity)
+		temperatures = append(temperatures, condition.Temperature)
+		humidities = append(humidities, condition.Humidity)
+		windSpeeds = append(windSpeeds, condition.WindSpeed)
+		visibilities = append(visibilities, condition.Visibility)
+	}
+
+	// Log the data for verification
+	log.Printf("Severities: %v\nTemperatures: %v\nHumidities: %v\nWindSpeeds: %v\nVisibilities: %v\n",
+		severities, temperatures, humidities, windSpeeds, visibilities)
+
+	// Respond with JSON for frontend charting
+	c.JSON(http.StatusOK, gin.H{
+		"severities":   severities,
+		"temperatures": temperatures,
+		"humidities":   humidities,
+		"wind_speeds":  windSpeeds,
+		"visibilities": visibilities,
+	})
+}
+
+func AverageWindSpeeds(c *gin.Context) {
+	// Query to retrieve average wind speed data
+	rows, err := db.Query("SELECT time_of_day, severity, average_wind_speed FROM average_wind_speed_data")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var speeds []AverageWindSpeed
+	for rows.Next() {
+		var speed AverageWindSpeed
+		err := rows.Scan(&speed.TimeOfDay, &speed.Severity, &speed.AverageWindSpeed)
+		if err != nil {
+			log.Fatal(err)
+		}
+		speeds = append(speeds, speed)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Average Wind Speeds: %v\n", speeds)
+
+	c.JSON(http.StatusOK, gin.H{
+		"average_wind_speeds": speeds,
 	})
 }

@@ -114,7 +114,7 @@ const AccidentGraphs: React.FC = () => {
 
     return (
         <div className="container3">
-            <h1 className="box1-topic">Accident Data for {selectedCity}</h1>
+            <h1 className="box1-topic">Accident Data for Each City Street</h1>
             
             <div>
                 <label htmlFor="city-select">Select City: </label>

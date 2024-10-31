@@ -66,6 +66,7 @@ const AccidentGraphs: React.FC = () => {
 
   return (
     <div className="container3">
+      <h1 className="box1-topic">Top 10 values by Accident Count in Different Weather Features</h1>
       <label htmlFor="city-select">Select Weather Feature: </label>
       <select
         id="city-select"
@@ -82,7 +83,7 @@ const AccidentGraphs: React.FC = () => {
       </select>
 
       <div className="chart-bar">
-        <h1 className="box1-topic">Top 10 values by Accident Count in {selectedCity}</h1>
+        
         {graphData && <Bar data={graphData} options={options} />}
       </div>
     </div>

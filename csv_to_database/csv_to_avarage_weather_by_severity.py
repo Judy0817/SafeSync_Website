@@ -2,8 +2,8 @@ import pandas as pd
 import psycopg2
 from psycopg2 import sql
 
-# Read the CSV file for weather feature accident counts
-csv_file = 'top_10_weather_feature_accident_counts.csv'
+# Read the CSV file for average weather conditions by severity
+csv_file = 'average_weather_conditions_by_severity.csv'
 data = pd.read_csv(csv_file)
 
 # Database connection parameters
@@ -18,13 +18,14 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-# Create table for weather feature accident counts if it does not exist
+# Create table for average weather conditions by severity if it does not exist
 create_table_query = '''
-CREATE TABLE IF NOT EXISTS weather_feature_accident_counts (
-    weather_feature VARCHAR(255),
-    all_values VARCHAR(255),
-    count INT,
-    PRIMARY KEY (weather_feature, all_values)
+CREATE TABLE IF NOT EXISTS average_weather_conditions_by_severity (
+    severity INT PRIMARY KEY,
+    temperature FLOAT,
+    humidity FLOAT,
+    wind_speed FLOAT,
+    visibility FLOAT
 )
 '''
 cur.execute(create_table_query)
@@ -32,13 +33,13 @@ conn.commit()
 
 # Insert data into the table
 insert_query = '''
-INSERT INTO weather_feature_accident_counts (weather_feature, all_values, count)
-VALUES (%s, %s, %s)
-ON CONFLICT (weather_feature, all_values) DO NOTHING
+INSERT INTO average_weather_conditions_by_severity (severity, temperature, humidity, wind_speed, visibility)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (severity) DO NOTHING
 '''
 
 for index, row in data.iterrows():
-    cur.execute(insert_query, (row['weather_feature'], row['all_values'], row['count']))
+    cur.execute(insert_query, (row['Severity'], row['Temperature(F)'], row['Humidity(%)'], row['Wind_Speed(mph)'], row['Visibility(mi)']))
 
 # Commit the transaction
 conn.commit()

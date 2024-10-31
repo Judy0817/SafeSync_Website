@@ -21,3 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+average_severities_combinations.json
+average_street_weather.json
+street_road_features_with_severity.json
+street.json

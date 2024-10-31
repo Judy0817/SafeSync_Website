@@ -37,34 +37,26 @@ const Header: React.FC = () => {
        
       )}
 
-      <div className="main-topic">MENU</div>
-      <Link to="/" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faChartLine} />
-        </span>
-        Graph Sub-Topic
-      </Link>
-
-      <div className="main-topic">Accident Overview</div>
+      <div className="main-topic">Different Dashboards</div>
       <Link to="/total_accident" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        Total Accidents
+        Accident Overview
+        
+      </Link>
+      <Link to="/weather" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Weather Impact Analysis
         
       </Link>
       <Link to="/" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        City / Street
-        
-      </Link>
-      <Link to="/" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faLightbulb} />
-        </span>
-        Top 5 Accidents
+        Road Feature Analysis
         
       </Link>
       <Link to="/" className="sub-topic with-icon">
@@ -75,14 +67,6 @@ const Header: React.FC = () => {
         
       </Link>
 
-      <div className="main-topic">Weather Impact Analysis</div>
-     
-        <Link to = '/weather' className='sub-topic with-icon'>
-          <span className="icon">
-            <FontAwesomeIcon icon={faGem} />
-            Weather Feature 01
-          </span>
-        </Link>
         
       <div className="sub-topic with-icon">
         <span className="icon">
