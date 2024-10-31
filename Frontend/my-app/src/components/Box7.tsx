@@ -39,59 +39,42 @@ const AccidentGraphs: React.FC = () => {
   }, [selectedYear]);
 
   const options = {
+    responsive: true,
     plugins: {
       legend: {
-        display: true,
-        labels: {
-          color: '#333', // Change legend label color
-          font: {
-            size: 14,
-          },
-        },
+        position: 'top' as const,
       },
       tooltip: {
-        backgroundColor: '#fff',
-        titleColor: '#333',
-        bodyColor: '#333',
+        enabled: true, // Enable tooltip, but not displaying values on bars
       },
-    },
-    responsive: true,
-    maintainAspectRatio: false, // Allow chart to adjust height
-    scales: {
-      x: {
-        grid: {
-          color: '#e0e0e0',
-        },
-      },
-      y: {
-        grid: {
-          color: '#e0e0e0',
-        },
-        beginAtZero: true,
+      // Disable data labels
+      datalabels: {
+        display: false, // Make sure data labels do not show on the bars
       },
     },
   };
 
   return (
-    <div className="accident-graphs-container">
-      <div className="year-select-container">
-        <label htmlFor="year-select">Select Year: </label>
-        <select
-          id="year-select"
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="year-select"
-        >
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="container3">
+      <h1 className="box1-topic">Accidents in {selectedYear}</h1>
+        <div>
+          <label htmlFor="type-select">Select Year: </label>
+          <select
+            id="type-select"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="type-select"
+          >
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
 
-      <div className="graph-container">
-        <h3 className="graph-title">Accidents in {selectedYear}</h3>
+        </div>
+      <div className="chart-Line">
+        
         {graphData && <Line data={graphData} options={options} />}
       </div>
     </div>

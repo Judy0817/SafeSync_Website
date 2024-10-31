@@ -57,7 +57,7 @@ const Header: React.FC = () => {
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        City / Area
+        City / Street
         
       </Link>
       <Link to="/" className="sub-topic with-icon">
@@ -76,12 +76,14 @@ const Header: React.FC = () => {
       </Link>
 
       <div className="main-topic">Weather Impact Analysis</div>
-      <div className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faGem} />
-        </span>
-        Diamond Sub-Topic
-      </div>
+     
+        <Link to = '/weather' className='sub-topic with-icon'>
+          <span className="icon">
+            <FontAwesomeIcon icon={faGem} />
+            Weather Feature 01
+          </span>
+        </Link>
+        
       <div className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faGem} />
@@ -156,7 +158,7 @@ const Header: React.FC = () => {
           </div>
         )}
           </div>
-            <Link to="/">Home</Link>
+            <Link to="/homePage">Home</Link>
             <Link to="/about">About</Link>
             <Link to="/">Profile</Link>
             <Link to="/contact">Contact</Link>

@@ -3,8 +3,10 @@ import Box2 from './Box2'
 import Box6 from './Box6'
 import Box7 from './Box7'
 import Box8 from './Box8'
+import Box9 from './Box9'
+import Box5 from './Box5'
 
-const TotalAccident = () => {
+const Weather = () => {
 
 
   return (
@@ -12,16 +14,16 @@ const TotalAccident = () => {
       <Header />
       <main>
       <div className='dashboard'>
-      <h1 className='heading_home'>Total Accident Overview</h1>
+      <h1 className='heading_home'>Weather Impact Analysis</h1>
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
-       <div className="dashboard-box1">
-          <Box6 />
+       <div className="dashboard-box5">
+          <Box5 />
         </div>
 
         <div className="dashboard-box2">
-          <Box2 />
+          <Box9 />
         </div>
 
         <div className="dashboard-box2">
@@ -44,4 +46,4 @@ const TotalAccident = () => {
   )
 }
 
-export default TotalAccident
+export default Weather
