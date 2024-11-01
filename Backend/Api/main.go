@@ -82,6 +82,34 @@ type AverageWindSpeed struct {
 	AverageWindSpeed float64 `json:"average_wind_speed"`
 }
 
+type RoadFeaturesCity struct {
+	City          string `json:"city"`
+	Crossing      int    `json:"crossing"`
+	GiveWay       int    `json:"give_way"`
+	Junction      int    `json:"junction"`
+	Railway       int    `json:"railway"`
+	Stop          int    `json:"stop"`
+	TrafficSignal int    `json:"traffic_signal"`
+}
+
+type RoadFeaturesStreet struct {
+	Street        string `json:"street"`
+	Crossing      int    `json:"crossing"`
+	GiveWay       int    `json:"give_way"`
+	Junction      int    `json:"junction"`
+	Railway       int    `json:"railway"`
+	Stop          int    `json:"stop"`
+	TrafficSignal int    `json:"traffic_signal"`
+}
+
+type RoadFeatureSeverity struct {
+	RoadFeature string `json:"road_feature"`
+	Severity1   int    `json:"severity_1"`
+	Severity2   int    `json:"severity_2"`
+	Severity3   int    `json:"severity_3"`
+	Severity4   int    `json:"severity_4"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -123,6 +151,9 @@ func main() {
 	router.GET("/get_cities", getCities)
 	router.GET("/average_weather_severity", AverageWeatherConditions)
 	router.GET("/average_wind_speed", AverageWindSpeeds)
+	router.GET("/road_feature_city", GetRoadFeaturesByCity)
+	router.GET("/road_feature_street", GetRoadFeaturesByStreet)
+	router.GET("/road_feature_by_severity", GetRoadFeaturesBySeverity)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -637,5 +668,95 @@ func AverageWindSpeeds(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"average_wind_speeds": speeds,
+	})
+}
+
+func GetRoadFeaturesByCity(c *gin.Context) {
+	// Query to retrieve road features for each city
+	rows, err := db.Query("SELECT city, crossing, give_way, junction, railway, stop, traffic_signal FROM road_feature_accidents")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var features []RoadFeaturesCity
+	for rows.Next() {
+		var feature RoadFeaturesCity
+		err := rows.Scan(&feature.City, &feature.Crossing, &feature.GiveWay, &feature.Junction, &feature.Railway, &feature.Stop, &feature.TrafficSignal)
+		if err != nil {
+			log.Fatal(err)
+		}
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Road Features: %v\n", features)
+
+	c.JSON(http.StatusOK, gin.H{
+		"road_features": features,
+	})
+}
+
+func GetRoadFeaturesBySeverity(c *gin.Context) {
+	// Query to retrieve road features and their severity levels
+	rows, err := db.Query("SELECT road_feature, severity_1, severity_2, severity_3, severity_4 FROM road_feature_accidents_by_severity")
+	if err != nil {
+		log.Fatalf("Error querying database: %v", err)
+	}
+	defer rows.Close()
+
+	var features []RoadFeatureSeverity
+	for rows.Next() {
+		var feature RoadFeatureSeverity
+		err := rows.Scan(&feature.RoadFeature, &feature.Severity1, &feature.Severity2, &feature.Severity3, &feature.Severity4)
+		if err != nil {
+			log.Fatalf("Error scanning row: %v", err)
+		}
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatalf("Error after iterating rows: %v", err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Road Features: %v\n", features)
+
+	c.JSON(http.StatusOK, gin.H{
+		"road_features": features,
+	})
+}
+
+func GetRoadFeaturesByStreet(c *gin.Context) {
+	// Query to retrieve road features for each city
+	rows, err := db.Query("SELECT street, crossing, give_way, junction, railway, stop, traffic_signal FROM road_feature_accidents_By_Street")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var features []RoadFeaturesStreet
+	for rows.Next() {
+		var feature RoadFeaturesStreet
+		err := rows.Scan(&feature.Street, &feature.Crossing, &feature.GiveWay, &feature.Junction, &feature.Railway, &feature.Stop, &feature.TrafficSignal)
+		if err != nil {
+			log.Fatal(err)
+		}
+		features = append(features, feature)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Road Features: %v\n", features)
+
+	c.JSON(http.StatusOK, gin.H{
+		"road_features": features,
 	})
 }

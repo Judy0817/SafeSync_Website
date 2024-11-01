@@ -52,7 +52,7 @@ const Header: React.FC = () => {
         Weather Impact Analysis
         
       </Link>
-      <Link to="/" className="sub-topic with-icon">
+      <Link to="/roadfeature" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>

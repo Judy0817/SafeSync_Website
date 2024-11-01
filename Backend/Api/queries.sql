@@ -14,4 +14,4 @@ SELECT * FROM severity_distribution;
 SELECT * FROM top_city;
 DROP TABLE weather_feature_accident_counts;
 
-SELECT * FROM average_weather_conditions_by_severity;
+SELECT * FROM road_feature_accidents_By_Street;
