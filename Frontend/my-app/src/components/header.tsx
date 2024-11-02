@@ -59,33 +59,14 @@ const Header: React.FC = () => {
         Road Feature Analysis
         
       </Link>
-      <Link to="/" className="sub-topic with-icon">
+      <Link to="/timeAnalysis" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
-        Severity
+        Time Based Analysis
         
       </Link>
 
-        
-      <div className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faGem} />
-        </span>
-        Diamond Sub-Topic
-      </div>
-      <div className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faGem} />
-        </span>
-        Diamond Sub-Topic
-      </div>
-      <div className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faGem} />
-        </span>
-        Diamond Sub-Topic
-      </div>
 
       <div className="main-topic">Road Feature Impact Analysis</div>
       <div className="sub-topic with-icon">

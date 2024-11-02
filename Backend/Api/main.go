@@ -110,6 +110,24 @@ type RoadFeatureSeverity struct {
 	Severity4   int    `json:"severity_4"`
 }
 
+type DaywiseAccidentCount struct {
+	DayName       string `json:"day_name"`
+	DayType       string `json:"day_type"`
+	AccidentCount int    `json:"accident_count"`
+}
+
+type PerHourAccidentCount struct {
+	Day           string  `json:"day"`
+	Hour          float64 `json:"hour"`           // Use float64 to match the hour data type
+	AccidentCount float64 `json:"accident_count"` // Use float64 to match the accident_count data type
+}
+
+type AccidentSeverityCount struct {
+	Year              float64 `json:"year"`
+	Severity          float64 `json:"severity"`
+	NumberOfAccidents float64 `json:"number_of_accidents"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -154,6 +172,9 @@ func main() {
 	router.GET("/road_feature_city", GetRoadFeaturesByCity)
 	router.GET("/road_feature_street", GetRoadFeaturesByStreet)
 	router.GET("/road_feature_by_severity", GetRoadFeaturesBySeverity)
+	router.GET("/day_wise_count", GetDaywiseAccidentCounts)
+	router.GET("/per_hour_count", PerHourAccidentCounts)
+	router.GET("/per_severity_year_count", PerSeverityAccidentCounts)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -758,5 +779,98 @@ func GetRoadFeaturesByStreet(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"road_features": features,
+	})
+}
+
+func GetDaywiseAccidentCounts(c *gin.Context) {
+	// Query to retrieve accident counts for each day
+	rows, err := db.Query("SELECT day_name, day_type, accident_count FROM daywise_accident_counts")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var counts []DaywiseAccidentCount
+	for rows.Next() {
+		var count DaywiseAccidentCount
+		err := rows.Scan(&count.DayName, &count.DayType, &count.AccidentCount)
+		if err != nil {
+			log.Fatal(err)
+		}
+		counts = append(counts, count)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Daywise Accident Counts: %v\n", counts)
+
+	// Send JSON response
+	c.JSON(http.StatusOK, gin.H{
+		"daywise_accident_counts": counts,
+	})
+}
+
+func PerHourAccidentCounts(c *gin.Context) {
+	// Query to retrieve accident counts for each day and hour
+	rows, err := db.Query("SELECT day, hour, accident_count FROM average_count_perhour ORDER BY day, hour")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var counts []PerHourAccidentCount
+	for rows.Next() {
+		var count PerHourAccidentCount
+		err := rows.Scan(&count.Day, &count.Hour, &count.AccidentCount)
+		if err != nil {
+			log.Fatal(err)
+		}
+		counts = append(counts, count)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Daywise Accident Counts: %v\n", counts)
+
+	// Send JSON response
+	c.JSON(http.StatusOK, gin.H{
+		"daywise_accident_counts": counts,
+	})
+}
+
+func PerSeverityAccidentCounts(c *gin.Context) {
+	// Query to retrieve accident severity counts
+	rows, err := db.Query("SELECT year, severity, number_of_accidents FROM accident_severity_counts ORDER BY year, severity")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var counts []AccidentSeverityCount
+	for rows.Next() {
+		var count AccidentSeverityCount
+		err := rows.Scan(&count.Year, &count.Severity, &count.NumberOfAccidents)
+		if err != nil {
+			log.Fatal(err)
+		}
+		counts = append(counts, count)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Accident Severity Counts: %v\n", counts)
+
+	// Send JSON response
+	c.JSON(http.StatusOK, gin.H{
+		"accident_severity_counts": counts,
 	})
 }

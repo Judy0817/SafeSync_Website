@@ -11,6 +11,7 @@ import AnalyzeData from "./components/analyzeData";
 import TotalAccident from "./components/total_accident";
 import Weather from "./components/weather";
 import RoadFeature from "./components/roadfeature";
+import Timenalysis from "./components/timeAnalysis";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -47,6 +48,8 @@ function App() {
                     element={<Weather />} />
                 <Route path="/roadfeature"
                     element={<RoadFeature />} />
+                <Route path="/timeAnalysis"
+                    element={<Timenalysis />} />
                 <Route path="/"
                     element={<Main />} />
 
