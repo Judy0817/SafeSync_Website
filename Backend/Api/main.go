@@ -175,7 +175,6 @@ func main() {
 	router.GET("/day_wise_count", GetDaywiseAccidentCounts)
 	router.GET("/per_hour_count", PerHourAccidentCounts)
 	router.GET("/per_severity_year_count", PerSeverityAccidentCounts)
-
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

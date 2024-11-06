@@ -185,7 +185,7 @@ nav {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 20px;
+  padding: 10px;
   box-sizing: border-box;
   z-index: 1;
 }
@@ -491,12 +491,21 @@ button:hover {
 
 
 }
-.container5{
-  width: 400px;
-  height: 270px;
-  text-align: center;
-  margin-left: 50px;
+
+.chart-content {
+  max-width: 500px; /* Set max width for the container */
+  height: 370px; /* Set the desired height */
+  margin: 0 auto; /* Center the chart */
+
 }
+.chart-content-pie {
+  max-width: 500px; /* Set max width for the container */
+  height: 350px; /* Set the desired height */
+  margin: 0 auto; /* Center the chart */
+  margin-top: -60px;
+}
+
+
 .container_box3{
   flex-wrap: wrap;
   justify-content: center;

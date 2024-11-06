@@ -12,6 +12,7 @@ import TotalAccident from "./components/total_accident";
 import Weather from "./components/weather";
 import RoadFeature from "./components/roadfeature";
 import Timenalysis from "./components/timeAnalysis";
+import Severity_Distribution from "./components/severity_distribution";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -50,6 +51,9 @@ function App() {
                     element={<RoadFeature />} />
                 <Route path="/timeAnalysis"
                     element={<Timenalysis />} />
+                <Route path="/severity_distribution"
+                    // eslint-disable-next-line react/jsx-pascal-case
+                    element={<Severity_Distribution />} />
                 <Route path="/"
                     element={<Main />} />
 

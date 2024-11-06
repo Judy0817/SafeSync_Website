@@ -67,15 +67,25 @@ ChartJS.register(
     if (error) return <div>{error}</div>;
 
     const options = {
+      responsive: true,
       plugins: {
-        legend: {
-          display: true,
-        },
-        tooltip: {
-          enabled: true,
-        },
+          legend: {
+              display: true,
+              labels: {
+                  color: '#333',
+                  font: { size: 14 },
+              },
+          },
+          tooltip: {
+              backgroundColor: '#fff',
+              titleColor: '#333',
+              bodyColor: '#333',
+          },
+          datalabels: {
+              display: false, // Ensure data labels do not show on the bars
+          },
       },
-    };
+  };
 
   return (
 

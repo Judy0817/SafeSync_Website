@@ -36,6 +36,117 @@ const Header: React.FC = () => {
                 <FontAwesomeIcon icon={faBars} className="menu2" onClick={hideDropdown}/>
        
       )}
+      
+      <div className="main-topic"> DASHBOARDS</div>
+      <div className="main-topic"> Accident Overview</div>
+      <Link to="/severity_distribution" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Severity Distribution
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Accident Hotspot
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        City-Wise Statistics
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Interactive Map View
+      </Link>
+
+      <div className="main-topic"> Weather Impact Analysis</div>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Weather Condition dashboard
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Seasonal Analysis
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Humidity and Temperature
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Precipitation and Visibility Impact
+      </Link>
+
+      <div className="main-topic"> Road Feature Analysis</div>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Road Hazard Heatmap
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Feature-Based Severity
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        City-Specific Road Features
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Risky Intersections
+      </Link>
+
+      <div className="main-topic"> Time-Based Analysis</div>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Hourly Trends
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Day of the Week Analysis
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Monthly and Yearly Comparisons
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Holiday and Event Impact
+      </Link>
+
+
+
+
+
+
 
       <div className="main-topic">Different Dashboards</div>
       <Link to="/total_accident" className="sub-topic with-icon">
@@ -90,7 +201,7 @@ const Header: React.FC = () => {
         Pencil Sub-Topic
       </div>
 
-      <div className="main-topic">MENU</div>
+      
       <div className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faChartLine} />
