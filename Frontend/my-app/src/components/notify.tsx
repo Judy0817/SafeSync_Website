@@ -71,9 +71,22 @@ const AlertSystem = () => {
   // Handle street selection and display alerts for the selected street
   const handleStreetSelect = (street: Street) => {
     setSelectedStreet(street);
-    setAlerts(street.severity >= 4 ? [street] : []); // Trigger alert if severity >= 4
+    setAlerts([street]); // Display selected street's severity alert
     setSearchTerm(''); // Clear search term after selection
     setFilteredStreets([]); // Clear filtered results after selection
+  };
+
+  // Helper function to apply severity-based styles
+  const getSeverityStyle = (severity: number) => {
+    if (severity >= 4) {
+      return {
+        color: 'red',
+        fontWeight: 'bold',
+      };
+    }
+    return {
+      color: 'green',
+    };
   };
 
   return (

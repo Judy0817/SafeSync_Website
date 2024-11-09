@@ -13,6 +13,7 @@ import Weather from "./components/weather";
 import RoadFeature from "./components/roadfeature";
 import Timenalysis from "./components/timeAnalysis";
 import Severity_Distribution from "./components/severity_distribution";
+import MapView from "./components/map";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -54,6 +55,9 @@ function App() {
                 <Route path="/severity_distribution"
                     // eslint-disable-next-line react/jsx-pascal-case
                     element={<Severity_Distribution />} />
+                <Route path="/map"
+                    // eslint-disable-next-line react/jsx-no-undef
+                    element={<MapView />} />
                 <Route path="/"
                     element={<Main />} />
 

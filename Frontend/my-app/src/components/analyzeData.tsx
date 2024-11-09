@@ -26,7 +26,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('00-199 FAIR LAWN PKWY');
   const [searchTerm, setSearchTerm] = useState('');
   const [initialSeverity, setInitialSeverity] = useState(5);
-  const [accidentRisk, setAccidentRisk] = useState(5);
+  const [accidentRisk, setAccidentRisk] = useState(2.0592773137083227);
 
   // Feature names to display
   const featureNames = [
