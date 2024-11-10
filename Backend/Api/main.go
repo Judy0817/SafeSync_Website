@@ -128,6 +128,15 @@ type AccidentSeverityCount struct {
 	NumberOfAccidents float64 `json:"number_of_accidents"`
 }
 
+type AccidentDataLocation struct {
+	Latitude          float64 `json:"latitude"`
+	Longitude         float64 `json:"longitude"`
+	City              string  `json:"city"`
+	Country           string  `json:"country"`
+	Street            string  `json:"street"`
+	NumberOfAccidents int     `json:"no_of_accidents"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -175,6 +184,8 @@ func main() {
 	router.GET("/day_wise_count", GetDaywiseAccidentCounts)
 	router.GET("/per_hour_count", PerHourAccidentCounts)
 	router.GET("/per_severity_year_count", PerSeverityAccidentCounts)
+	router.GET("/location_data", LocationAccidentData)
+
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
@@ -871,5 +882,36 @@ func PerSeverityAccidentCounts(c *gin.Context) {
 	// Send JSON response
 	c.JSON(http.StatusOK, gin.H{
 		"accident_severity_counts": counts,
+	})
+}
+
+func LocationAccidentData(c *gin.Context) {
+	// Query to retrieve accident data
+	rows, err := db.Query("SELECT latitude, longitude, city, country, street, no_of_accidents FROM accident_data_location ORDER BY city, street")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var accidents []AccidentDataLocation
+	for rows.Next() {
+		var accident AccidentDataLocation
+		err := rows.Scan(&accident.Latitude, &accident.Longitude, &accident.City, &accident.Country, &accident.Street, &accident.NumberOfAccidents)
+		if err != nil {
+			log.Fatal(err)
+		}
+		accidents = append(accidents, accident)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("Accident Data: %v\n", accidents)
+
+	// Send JSON response
+	c.JSON(http.StatusOK, gin.H{
+		"accident_data": accidents,
 	})
 }

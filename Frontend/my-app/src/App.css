@@ -364,18 +364,16 @@ nav {
 }
 
 .dashboard-box5 {
-  width: 450px;
-  height: 350px;
+  width: 700px;
+  height: 700px;
   border-radius: 5px;
   padding: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin:10px;
   background-color: #f1ecec;
   box-sizing: border-box;
-  text-align: center;
-  display: flex;
   justify-content: center;
-  align-items: flex-start;
+  text-align: center;
   
 }
 

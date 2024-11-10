@@ -57,7 +57,7 @@ const Header: React.FC = () => {
         </span>
         City-Wise Statistics
       </Link>
-      <Link to="/total_accident" className="sub-topic with-icon">
+      <Link to="/map" className="sub-topic with-icon">
         <span className="icon">
           <FontAwesomeIcon icon={faLightbulb} />
         </span>

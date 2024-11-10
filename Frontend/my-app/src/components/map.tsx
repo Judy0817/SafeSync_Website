@@ -4,6 +4,7 @@ import Box4 from './Box4'
 import Box12 from './Box12'
 import Box13 from './Box13'
 import Box14 from './Box14'
+import Box23 from './Box23'
 
 const MapView = () => {
 
@@ -17,8 +18,8 @@ const MapView = () => {
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
-       <div className="dashboard-box1">
-          <Box1 />
+       <div className="dashboard-box5">
+          <Box23 />
         </div>
 
         <div className="dashboard-box2">
