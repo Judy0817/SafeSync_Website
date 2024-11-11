@@ -187,6 +187,7 @@ func main() {
 	router.GET("/per_hour_count", PerHourAccidentCounts)
 	router.GET("/per_severity_year_count", PerSeverityAccidentCounts)
 	router.GET("/location_data", LocationAccidentData)
+	router.GET("/location_data_all", LocationAccidentDataAll)
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
@@ -937,6 +938,42 @@ func LocationAccidentData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"city":          city,
 		"year":          year,
+		"accident_data": accidents,
+	})
+}
+
+func LocationAccidentDataAll(c *gin.Context) {
+	// Query to retrieve all accident data records
+	query := "SELECT latitude, longitude, city, country, street, no_of_accidents, avg_severity, year FROM accident_data_location ORDER BY street"
+
+	// Query to retrieve accident data
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	// Process query results
+	var accidents []AccidentDataLocation
+	for rows.Next() {
+		var accident AccidentDataLocation
+		err := rows.Scan(&accident.Latitude, &accident.Longitude, &accident.City, &accident.Country, &accident.Street, &accident.NumberOfAccidents, &accident.Severity, &accident.Year)
+		if err != nil {
+			log.Fatal(err)
+		}
+		accidents = append(accidents, accident)
+	}
+
+	// Error check for rows
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Log the data to verify it's correct
+	log.Printf("All Accident Data: %v\n", accidents)
+
+	// Send JSON response
+	c.JSON(http.StatusOK, gin.H{
 		"accident_data": accidents,
 	})
 }

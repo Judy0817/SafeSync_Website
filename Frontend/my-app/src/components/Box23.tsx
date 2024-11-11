@@ -15,18 +15,16 @@ const AccidentMapByYearAndCity = () => {
     severity: number;
   }
 
-  // Fixed years from 2016 to 2023, including an "All" option
   const years = ["All", 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023];
+  const [cities, setCities] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>("2019");
+  const [selectedCity, setSelectedCity] = useState<string>("Lenexa");
+  const [accidentData, setAccidentData] = useState<AccidentData[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const [cities, setCities] = useState<string[]>([]); // List of cities
-  const [selectedYear, setSelectedYear] = useState<string>("All"); // Selected year (default is "All")
-  const [selectedCity, setSelectedCity] = useState<string>("Lenexa"); // Default city is "Lenexa"
-  const [accidentData, setAccidentData] = useState<AccidentData[] | null>(null); // Accident data
-  const [loading, setLoading] = useState<boolean>(false); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-  const [searchQuery, setSearchQuery] = useState<string>(""); // Search query for city
-
-  const mapRef = useRef<any>(null); // Ref for the map instance
+  const mapRef = useRef<any>(null);
 
   const defaultIcon = new L.Icon({
     iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
@@ -42,80 +40,76 @@ const AccidentMapByYearAndCity = () => {
     popupAnchor: [1, -34],
   });
 
-  // Fetch available cities on component mount
   useEffect(() => {
     const fetchCities = async () => {
       try {
         const citiesResponse = await axios.get("http://localhost:8080/get_cities");
-        setCities(citiesResponse.data.cities); // Update cities
+        setCities(citiesResponse.data.cities);
       } catch (error) {
         console.error("Error fetching cities:", error);
-        setError("Failed to load cities"); // Error message
+        setError("Failed to load cities");
       }
     };
 
     fetchCities();
   }, []);
 
-  // Fetch accident data based on selected year and city
   const fetchAccidentData = async () => {
     if (!selectedCity) return;
   
     setLoading(true);
     try {
-      // If selectedYear is "All", omit the year parameter to get data for all years
-      const response = await axios.get(
-        `http://localhost:8080/location_data?year=${selectedYear === "All" ? "" : selectedYear}&city=${selectedCity}`
-      );
+      // Only include 'year' if it's not 'All'
+      const yearParam = selectedYear === "All" ? "" : `year=${selectedYear}`;
+  
+      const url = `http://localhost:8080/location_data?city=${selectedCity}${yearParam ? `&${yearParam}` : ""}`;
+  
+      const response = await axios.get(url);
       const accidentData = response.data.accident_data;
+  
       if (Array.isArray(accidentData) && accidentData.length > 0) {
-        setAccidentData(accidentData); // Update accident data
-        setError(null); // Clear error
-        updateMapCenter(accidentData); // Update map center
+        setAccidentData(accidentData);
+        setError(null);
+        updateMapCenter(accidentData);
       } else {
-        setAccidentData([]); // No data found
+        setAccidentData([]);
         setError("No accident data available for the selected city and year.");
       }
     } catch (error) {
       console.error("Error fetching accident data:", error);
-      setError("Failed to load accident data"); // Error message
+      setError("Failed to load accident data");
     } finally {
       setLoading(false);
     }
   };
   
+  
 
-  // Update map center and zoom level based on accident data
   const updateMapCenter = (accidentData: AccidentData[]) => {
     if (mapRef.current && accidentData.length > 0) {
-      const { latitude, longitude } = accidentData[0]; // Get the coordinates of the first accident
-      mapRef.current.setView([latitude, longitude], 10); // Update map center and zoom level
+      const { latitude, longitude } = accidentData[0];
+      mapRef.current.setView([latitude, longitude], 10);
     }
   };
 
-  // Handle search query change
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
   };
 
-  // Filter cities based on search query
   const filteredCities = cities.filter((city) =>
     city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle city selection and fetch accident data
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
-    setSearchQuery(''); // Clear search query after selecting a city
+    setSearchQuery('');
   };
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif", padding: "0px" }}>
       <h1 style={{ textAlign: "center", color: "#333" }}>Accident Map Yearly</h1>
 
-      {/* Year and City Selection */}
       <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "center", gap: "20px" }}>
-        {/* Year Dropdown */}
         <div>
           <label style={{ marginRight: "10px" }}>Year: </label>
           <select
@@ -138,7 +132,6 @@ const AccidentMapByYearAndCity = () => {
           </select>
         </div>
 
-        {/* Search bar for city name */}
         <div style={{ position: "relative", maxWidth: "400px", margin: "0 auto" }}>
           <input
             id="citySearch"
@@ -157,7 +150,6 @@ const AccidentMapByYearAndCity = () => {
               transition: "border-color 0.3s ease",
             }}
           />
-          {/* Display dropdown list of cities matching the search query */}
           {searchQuery && filteredCities.length > 0 && (
             <ul
               style={{
@@ -197,7 +189,6 @@ const AccidentMapByYearAndCity = () => {
           )}
         </div>
 
-        {/* Fetch button */}
         <div>
           <button
             onClick={fetchAccidentData}
@@ -217,7 +208,6 @@ const AccidentMapByYearAndCity = () => {
         </div>
       </div>
 
-      {/* Display selected city and year */}
       {selectedCity && (
         <div style={{ textAlign: "center", margin: "10px 0", fontSize: "18px" }}>
           {selectedCity} - {selectedYear}
@@ -226,41 +216,38 @@ const AccidentMapByYearAndCity = () => {
 
       {error && <div style={{ textAlign: "center", color: "red" }}>{error}</div>}
 
-      {/* Map to display accidents */}
-      {accidentData && (
-        <MapContainer
-          center={[51.505, -0.09]} // Default center
-          zoom={10}
-          style={{ width: "100%", height: "500px" }}
-          ref={mapRef}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          {accidentData.map((accident, index) => (
-            <Marker
-              key={index}
-              position={[accident.latitude, accident.longitude]}
-              icon={accident.severity >= 3 ? redIcon : defaultIcon}
-            >
-              <Popup>
-                <div>
+      <MapContainer
+        center={[39.0997, -94.5786]} // Default coordinates (Kansas City)
+        zoom={5}
+        style={{ width: "100%", height: "500px" }}
+        ref={mapRef}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        {accidentData && accidentData.map((accident, index) => (
+          <Marker
+            key={index}
+            position={[accident.latitude, accident.longitude]}
+            icon={accident.severity >= 3 ? redIcon : defaultIcon}
+          >
+            <Popup>
+              <div>
                 <strong>City:</strong> {accident.city}
                 <br />
-                  <strong>Street:</strong> {accident.street}
-                  <br />
-                  <strong>Year:</strong> {accident.year}
-                  <br />
-                  <strong>Severity:</strong> {accident.severity}
-                  <br />
-                  <strong>Accidents:</strong> {accident.no_of_accidents}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      )}
+                <strong>Street:</strong> {accident.street}
+                <br />
+                <strong>Year:</strong> {accident.year}
+                <br />
+                <strong>Severity:</strong> {accident.severity}
+                <br />
+                <strong>Accidents:</strong> {accident.no_of_accidents}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 };
