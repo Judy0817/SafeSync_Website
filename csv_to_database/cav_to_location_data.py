@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 from psycopg2 import sql
 
-# Example accident data
+# Example accident data CSV file
 csv_file = 'latitude_accident_data_filtered.csv'  # Update with your actual CSV file name
 data = pd.read_csv(csv_file)
 
@@ -23,7 +23,7 @@ drop_table_query = 'DROP TABLE IF EXISTS accident_data_location'
 cur.execute(drop_table_query)
 conn.commit()
 
-# Create a table for accident data
+# Create a table for accident data, including the year column
 create_table_query = '''
 CREATE TABLE accident_data_location (
     latitude FLOAT,
@@ -32,23 +32,27 @@ CREATE TABLE accident_data_location (
     country TEXT,
     street TEXT,
     no_of_accidents INT,
-    PRIMARY KEY (latitude, longitude, street)  -- Combined primary key for latitude, longitude, and street
+    avg_severity FLOAT,  -- Severity is now a FLOAT column
+    year INT,            -- Added year column
+    PRIMARY KEY (latitude, longitude, street, year)  -- Combined primary key for latitude, longitude, street, and year
 )
 '''
 cur.execute(create_table_query)
 conn.commit()
 
-# Insert data into the table
+# Insert data into the table, including the year column
 insert_query = '''
-INSERT INTO accident_data_location (latitude, longitude, city, country, street, no_of_accidents)
-VALUES (%s, %s, %s, %s, %s, %s)
-ON CONFLICT (latitude, longitude, street) DO UPDATE 
-SET no_of_accidents = EXCLUDED.no_of_accidents
+INSERT INTO accident_data_location (latitude, longitude, city, country, street, no_of_accidents, avg_severity, year)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (latitude, longitude, street, year) DO UPDATE 
+SET no_of_accidents = EXCLUDED.no_of_accidents,
+    avg_severity = EXCLUDED.avg_severity
 '''
 
 # Loop over each row in the DataFrame and insert it into the database
 for index, row in data.iterrows():
-    cur.execute(insert_query, (row['latitude'], row['longitude'], row['city'], row['country'], row['street'], row['no_of_accidents']))
+    # Assuming 'year' is a column in the CSV
+    cur.execute(insert_query, (row['latitude'], row['longitude'], row['city'], row['country'], row['street'], row['no_of_accidents'], row['avg_severity'], row['year']))
 
 # Commit the transaction
 conn.commit()

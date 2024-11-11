@@ -364,7 +364,7 @@ nav {
 }
 
 .dashboard-box5 {
-  width: 700px;
+  width: 1400px;
   height: 700px;
   border-radius: 5px;
   padding: 10px;
@@ -536,6 +536,17 @@ button:hover {
 
 .container_box3 {
   font-size: medium;
+}
+
+#heatmap {
+  width: 100%;
+  height: 500px;
+  border: 2px solid red; /* Add a border to check if the div is rendered */
+}
+/* styles.css */
+.map-container {
+  height: 500px;
+  width: 100%;
 }
 
 

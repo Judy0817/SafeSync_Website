@@ -5,6 +5,8 @@ import Box12 from './Box12'
 import Box13 from './Box13'
 import Box14 from './Box14'
 import Box23 from './Box23'
+import Box24 from './Box24'
+import Box25 from './Box25'
 
 const MapView = () => {
 
@@ -14,24 +16,12 @@ const MapView = () => {
       <Header />
       <main>
       <div className='dashboard'>
-      <h1 className='heading_home'>Road Feature Impact Analysis</h1>
+      <h1 className='heading_home'>Interactive Map View</h1>
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
        <div className="dashboard-box5">
           <Box23 />
-        </div>
-
-        <div className="dashboard-box2">
-          <Box12 />
-        </div>
-
-        <div className="dashboard-box2">
-          <Box13 />
-        </div>
-
-        <div className="dashboard-box2">
-          <Box14 />
         </div>
        </div>
 

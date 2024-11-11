@@ -135,6 +135,8 @@ type AccidentDataLocation struct {
 	Country           string  `json:"country"`
 	Street            string  `json:"street"`
 	NumberOfAccidents int     `json:"no_of_accidents"`
+	Severity          float64 `json:"severity"` // Add this field for the average severity
+	Year              int     `json:"year"`
 }
 
 func main() {
@@ -886,32 +888,55 @@ func PerSeverityAccidentCounts(c *gin.Context) {
 }
 
 func LocationAccidentData(c *gin.Context) {
-	// Query to retrieve accident data
-	rows, err := db.Query("SELECT latitude, longitude, city, country, street, no_of_accidents FROM accident_data_location ORDER BY city, street")
+	// Get city and year parameters from the query
+	city := c.Query("city")
+	year := c.DefaultQuery("year", "") // Default to an empty string if not provided
+
+	if city == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "City parameter is required"})
+		return
+	}
+
+	// Build the query based on the presence of the year parameter
+	var query string
+	if year != "" {
+		// If year is provided, include it in the query filter
+		query = "SELECT latitude, longitude, city, country, street, no_of_accidents, avg_severity, year FROM accident_data_location WHERE city = $1 AND year = $2 ORDER BY street"
+	} else {
+		// If year is not provided, don't filter by year
+		query = "SELECT latitude, longitude, city, country, street, no_of_accidents, avg_severity, year FROM accident_data_location WHERE city = $1 ORDER BY street"
+	}
+
+	// Query to retrieve accident data for the specified city (and optionally year)
+	rows, err := db.Query(query, city, year)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
+	// Process query results
 	var accidents []AccidentDataLocation
 	for rows.Next() {
 		var accident AccidentDataLocation
-		err := rows.Scan(&accident.Latitude, &accident.Longitude, &accident.City, &accident.Country, &accident.Street, &accident.NumberOfAccidents)
+		err := rows.Scan(&accident.Latitude, &accident.Longitude, &accident.City, &accident.Country, &accident.Street, &accident.NumberOfAccidents, &accident.Severity, &accident.Year)
 		if err != nil {
 			log.Fatal(err)
 		}
 		accidents = append(accidents, accident)
 	}
-	err = rows.Err()
-	if err != nil {
+
+	// Error check for rows
+	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
 	// Log the data to verify it's correct
-	log.Printf("Accident Data: %v\n", accidents)
+	log.Printf("Accident Data for %s (Year: %s): %v\n", city, year, accidents)
 
 	// Send JSON response
 	c.JSON(http.StatusOK, gin.H{
+		"city":          city,
+		"year":          year,
 		"accident_data": accidents,
 	})
 }

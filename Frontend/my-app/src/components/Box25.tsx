@@ -12,15 +12,14 @@ const AccidentMapByYearAndCity = () => {
     street: string;
     no_of_accidents: number;
     year: number;
-    severity: number;
   }
 
-  // Fixed years from 2016 to 2023, including an "All" option
-  const years = ["All", 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023];
+  // Fixed years from 2016 to 2023
+  const years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023];
 
   const [cities, setCities] = useState<string[]>([]); // List of cities
-  const [selectedYear, setSelectedYear] = useState<string>("All"); // Selected year (default is "All")
-  const [selectedCity, setSelectedCity] = useState<string>("Lenexa"); // Default city is "Lenexa"
+  const [selectedYear, setSelectedYear] = useState<number | null>(null); // Selected year
+  const [selectedCity, setSelectedCity] = useState<string | null>(null); // Selected city
   const [accidentData, setAccidentData] = useState<AccidentData[] | null>(null); // Accident data
   const [loading, setLoading] = useState<boolean>(false); // Loading state
   const [error, setError] = useState<string | null>(null); // Error state
@@ -59,13 +58,12 @@ const AccidentMapByYearAndCity = () => {
 
   // Fetch accident data based on selected year and city
   const fetchAccidentData = async () => {
-    if (!selectedCity) return;
-  
+    if (!selectedYear || !selectedCity) return;
+
     setLoading(true);
     try {
-      // If selectedYear is "All", omit the year parameter to get data for all years
       const response = await axios.get(
-        `http://localhost:8080/location_data?year=${selectedYear === "All" ? "" : selectedYear}&city=${selectedCity}`
+        `http://localhost:8080/location_data?year=${selectedYear}&city=${selectedCity}`
       );
       const accidentData = response.data.accident_data;
       if (Array.isArray(accidentData) && accidentData.length > 0) {
@@ -83,7 +81,6 @@ const AccidentMapByYearAndCity = () => {
       setLoading(false);
     }
   };
-  
 
   // Update map center and zoom level based on accident data
   const updateMapCenter = (accidentData: AccidentData[]) => {
@@ -111,7 +108,7 @@ const AccidentMapByYearAndCity = () => {
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif", padding: "0px" }}>
-      <h1 style={{ textAlign: "center", color: "#333" }}>Accident Map Yearly</h1>
+      <h1 style={{ textAlign: "center", color: "#333" }}>Accident Map Yeraly</h1>
 
       {/* Year and City Selection */}
       <div style={{ margin: "20px 0", textAlign: "center", display: "flex", justifyContent: "center", gap: "20px" }}>
@@ -119,8 +116,8 @@ const AccidentMapByYearAndCity = () => {
         <div>
           <label style={{ marginRight: "10px" }}>Year: </label>
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+            value={selectedYear ?? ""}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
             style={{
               padding: "10px",
               fontSize: "16px",
@@ -129,7 +126,7 @@ const AccidentMapByYearAndCity = () => {
               width: "200px",
             }}
           >
-            <option value="All">All</option>
+            <option value="" disabled>Select Year</option>
             {years.map((year) => (
               <option key={year} value={year}>
                 {year}
@@ -201,7 +198,7 @@ const AccidentMapByYearAndCity = () => {
         <div>
           <button
             onClick={fetchAccidentData}
-            disabled={loading || !selectedCity}
+            disabled={loading || !selectedYear || !selectedCity}
             style={{
               padding: "10px 20px",
               fontSize: "16px",
@@ -218,7 +215,7 @@ const AccidentMapByYearAndCity = () => {
       </div>
 
       {/* Display selected city and year */}
-      {selectedCity && (
+      {selectedCity && selectedYear && (
         <div style={{ textAlign: "center", margin: "10px 0", fontSize: "18px" }}>
           {selectedCity} - {selectedYear}
         </div>
@@ -242,7 +239,7 @@ const AccidentMapByYearAndCity = () => {
             <Marker
               key={index}
               position={[accident.latitude, accident.longitude]}
-              icon={accident.severity >= 3 ? redIcon : defaultIcon}
+              icon={accident.no_of_accidents > 10 ? redIcon : defaultIcon}
             >
               <Popup>
                 <div>
@@ -250,11 +247,7 @@ const AccidentMapByYearAndCity = () => {
                 <br />
                   <strong>Street:</strong> {accident.street}
                   <br />
-                  <strong>Year:</strong> {accident.year}
-                  <br />
-                  <strong>Severity:</strong> {accident.severity}
-                  <br />
-                  <strong>Accidents:</strong> {accident.no_of_accidents}
+                  <strong>No. of Accidents:</strong> {accident.no_of_accidents}
                 </div>
               </Popup>
             </Marker>
