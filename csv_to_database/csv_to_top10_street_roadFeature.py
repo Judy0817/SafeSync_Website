@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'location_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -18,20 +18,6 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-# Create table for road feature accidents if it does not exist
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS road_feature_accidents_By_Street (
-    street VARCHAR(50) PRIMARY KEY,
-    crossing INT,
-    give_way INT,
-    junction INT,
-    railway INT,
-    stop INT,
-    traffic_signal INT
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert data into the table
 insert_query = '''
