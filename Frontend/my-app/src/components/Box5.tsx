@@ -43,7 +43,7 @@ const Box3 = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/weather_conditions');
+      const response = await axios.get('http://localhost:8084/weather_conditions');
       const responseData = response.data;
 
       console.log('Fetched data:', responseData);

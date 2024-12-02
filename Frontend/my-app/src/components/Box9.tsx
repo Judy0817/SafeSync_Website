@@ -13,7 +13,7 @@ const AccidentGraphs: React.FC = () => {
       if (!city) return;
 
       try {
-        const response = await axios.get(`http://localhost:8080/weather_conditions_count?weather_feature=${city}`);
+        const response = await axios.get(`http://localhost:8084/weather_conditions_count?weather_feature=${city}`);
         setGraphData({
           labels: response.data.labels,
           datasets: [

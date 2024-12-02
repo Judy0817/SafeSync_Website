@@ -39,7 +39,7 @@ const Box1 = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/road_features');
+      const response = await axios.get('http://localhost:8082/road_features');
       const responseData = response.data;
 
       console.log('Fetched data:', responseData);
@@ -64,7 +64,7 @@ const Box1 = () => {
 
   const fetchTop3Data = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/top3_road_features');
+      const response = await axios.get('http://localhost:8082/top3_road_features');
       const responseData = response.data;
 
       console.log('Fetched top 3 data:', responseData);

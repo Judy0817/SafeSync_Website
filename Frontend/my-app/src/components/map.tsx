@@ -20,8 +20,8 @@ const MapView = () => {
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
-       <div className="dashboard-box6">
-          <Box24 />
+       <div className="dashboard-box5">
+          <Box23 />
         </div>
        </div>
 

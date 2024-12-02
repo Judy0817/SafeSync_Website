@@ -9,7 +9,7 @@ const RoadFeatureSeverity: React.FC = () => {
   useEffect(() => {
     const fetchRoadFeatureData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/road_feature_by_severity');
+        const response = await axios.get('http://localhost:8082/road_feature_by_severity');
         const features = response.data.road_features;
 
         // Prepare data for the chart

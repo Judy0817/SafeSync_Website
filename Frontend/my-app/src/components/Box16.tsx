@@ -37,7 +37,7 @@ const WeekdayWeekendAccidentPieChart: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/day_wise_count');
+      const response = await axios.get('http://localhost:8083/day_wise_count');
       const responseData = response.data.daywise_accident_counts; // Adjust this line if needed
   
       console.log('Fetched data:', responseData); // Log the fetched data

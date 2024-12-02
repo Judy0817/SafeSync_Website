@@ -25,7 +25,7 @@ const AccidentSeverityGraph: React.FC = () => {
         const fetchAccidentSeverityData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/per_severity_year_count'); // Replace with your API URL
+                const response = await axios.get('http://localhost:8083/per_severity_year_count'); // Replace with your API URL
                 const data = response.data.accident_severity_counts;
 
                 // Prepare accident counts by year

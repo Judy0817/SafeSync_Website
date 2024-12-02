@@ -43,7 +43,7 @@ const AccidentMapByYearAndCity = () => {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const citiesResponse = await axios.get("http://localhost:8080/get_cities");
+        const citiesResponse = await axios.get("http://localhost:8081/get_cities");
         setCities(citiesResponse.data.cities);
       } catch (error) {
         console.error("Error fetching cities:", error);
@@ -62,7 +62,7 @@ const AccidentMapByYearAndCity = () => {
       // Only include 'year' if it's not 'All'
       const yearParam = selectedYear === "All" ? "" : `year=${selectedYear}`;
   
-      const url = `http://localhost:8080/location_data?city=${selectedCity}${yearParam ? `&${yearParam}` : ""}`;
+      const url = `http://localhost:8081/location_data?city=${selectedCity}${yearParam ? `&${yearParam}` : ""}`;
   
       const response = await axios.get(url);
       const accidentData = response.data.accident_data;

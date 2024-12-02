@@ -36,7 +36,7 @@ ChartJS.register(
   
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/severity_distribution');
+        const response = await axios.get('http://localhost:8081/severity_distribution');
         const responseData = response.data;
   
         console.log('Fetched data:', responseData);

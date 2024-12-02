@@ -45,7 +45,7 @@ const AccidentMapByYearAndCity = () => {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const citiesResponse = await axios.get("http://localhost:8080/get_cities");
+        const citiesResponse = await axios.get("http://localhost:8081/get_cities");
         setCities(citiesResponse.data.cities); // Update cities
       } catch (error) {
         console.error("Error fetching cities:", error);
@@ -63,7 +63,7 @@ const AccidentMapByYearAndCity = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:8080/location_data?year=${selectedYear}&city=${selectedCity}`
+        `http://localhost:8081/location_data?year=${selectedYear}&city=${selectedCity}`
       );
       const accidentData = response.data.accident_data;
       if (Array.isArray(accidentData) && accidentData.length > 0) {

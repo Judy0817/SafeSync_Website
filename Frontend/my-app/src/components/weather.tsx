@@ -20,7 +20,7 @@ const Weather = () => {
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
-       <div className="dashboard-box2">
+       <div className="dashboard-box4">
           <Box5 />
         </div>
 

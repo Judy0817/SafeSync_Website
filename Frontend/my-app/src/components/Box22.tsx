@@ -8,7 +8,7 @@ const DaywiseAccidentCountGraph: React.FC = () => {
   useEffect(() => {
     const fetchAccidentCountData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/day_wise_count'); // Update with correct endpoint
+        const response = await axios.get('http://localhost:8083/day_wise_count'); // Update with correct endpoint
         const data = response.data.daywise_accident_counts;
 
         // Prepare labels and data for the chart

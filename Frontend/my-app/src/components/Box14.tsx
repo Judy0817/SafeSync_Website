@@ -25,7 +25,7 @@ const RoadFeaturesGraphs: React.FC = () => {
         const fetchRoadFeaturesData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/road_feature_street'); // Replace with your API URL
+                const response = await axios.get('http://localhost:8082/road_feature_street'); // Replace with your API URL
                 const data = response.data;
                 setRoadFeaturesData(data.road_features); // Store the entire dataset
                 setLoading(false);

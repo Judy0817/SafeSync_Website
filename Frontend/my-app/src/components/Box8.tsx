@@ -34,7 +34,7 @@ const AccidentGraphs: React.FC = () => {
     useEffect(() => {
         const fetchCities = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/get_cities');
+                const response = await axios.get('http://localhost:8081/get_cities');
                 setCities(response.data.cities);
                 // Automatically fetch data for the default city if it exists in the fetched cities
                 if (response.data.cities.includes(selectedCity)) {
@@ -55,7 +55,7 @@ const AccidentGraphs: React.FC = () => {
 
         setLoading(true); // Set loading to true before fetching
         try {
-            const response = await axios.get(`http://localhost:8080/top_10_streets_per_city?city=${city}`);
+            const response = await axios.get(`http://localhost:8081/top_10_streets_per_city?city=${city}`);
             setGraphData({
                 labels: response.data.labels, // Assuming response.data.labels contains the labels for the x-axis
                 datasets: [

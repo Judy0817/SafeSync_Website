@@ -26,7 +26,7 @@ const AccidentSeverityGraph: React.FC = () => {
         const fetchWeatherData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/average_weather_severity'); // Replace with your API URL
+                const response = await axios.get('http://localhost:8084/average_weather_severity'); // Replace with your API URL
 
                 console.log('API response:', response.data);  // Debugging line to inspect the data
 
