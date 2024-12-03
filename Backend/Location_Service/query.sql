@@ -61,3 +61,5 @@ CREATE TABLE IF NOT EXISTS total_accidents (
     year INT PRIMARY KEY,
     count INT
 )
+
+-- SELECT * FROM top_city;
