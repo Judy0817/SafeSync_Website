@@ -8,7 +8,7 @@ data = pd.read_csv(csv_file)
 # Step 2: Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'location_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -17,15 +17,6 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-# Step 4: Create table if it does not exist
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS severity_distribution (
-    severity VARCHAR(255) UNIQUE,
-    count INT
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Step 5: Insert data into the table
 insert_query = '''

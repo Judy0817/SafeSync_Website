@@ -1,19 +1,18 @@
 import pandas as pd
 import psycopg2
-from psycopg2 import sql
 
 # Load the CSV file containing total accidents per year
 csv_file = 'total_accidents_per_year_2016_2023.csv'  # Update with your CSV file name
-data = pd.read_csv(csv_file)
-
-# Check the loaded data
-print("Loaded data from CSV:")
-print(data)
+try:
+    data = pd.read_csv(csv_file)
+except FileNotFoundError:
+    print(f"Error: The file {csv_file} was not found.")
+    exit()
 
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'location_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -23,30 +22,19 @@ try:
     conn = psycopg2.connect(**db_params)
     cur = conn.cursor()
 
-    # Create table if it does not exist
-    create_table_query = '''
-    CREATE TABLE IF NOT EXISTS total_accidents (
-        year INT PRIMARY KEY,
-        count INT
-    )
-    '''
-    cur.execute(create_table_query)
-    conn.commit()
-    print("Table created or already exists.")
-
-    # Insert data into the table
+    # Insert query with conflict handling
     insert_query = '''
     INSERT INTO total_accidents (year, count)
     VALUES (%s, %s)
     ON CONFLICT (year) DO UPDATE SET count = EXCLUDED.count;
-    ''' 
+    '''
 
-    # Prepare data for insertion
-    for index, row in data.iterrows():
-        year = row['Year']  # Change 'Year' to the column name in your CSV
-        count = row['count']  # Change 'count' to the column name in your CSV
-        cur.execute(insert_query, (year, count))
-    
+    # Prepare the data as a list of tuples
+    rows_to_insert = list(data.itertuples(index=False, name=None))
+   
+    # Execute the bulk insert
+    cur.executemany(insert_query, rows_to_insert)
+
     # Commit the transaction
     conn.commit()
     print("Data has been successfully inserted into the PostgreSQL database.")

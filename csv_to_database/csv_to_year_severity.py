@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'time_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -17,23 +17,6 @@ db_params = {
 # Connect to the PostgreSQL database
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
-
-# Drop the table if it exists
-drop_table_query = 'DROP TABLE IF EXISTS accident_severity_counts'
-cur.execute(drop_table_query)
-conn.commit()
-
-# Create a table for accident severity counts
-create_table_query = '''
-CREATE TABLE accident_severity_counts (
-    year FLOAT,
-    severity FLOAT,
-    number_of_accidents FLOAT,
-    PRIMARY KEY (year, severity)  -- Combined primary key for year and severity
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert data into the table
 insert_query = '''
@@ -45,7 +28,13 @@ SET number_of_accidents = EXCLUDED.number_of_accidents
 
 # Loop over each row in the DataFrame and insert it into the database
 for index, row in data.iterrows():
-    cur.execute(insert_query, (row['Year'], row['Severity'], row['Number_of_Accidents']))
+    # Convert numpy types to native Python types
+    year = int(row['Year'])  # Convert to Python int
+    severity = int(row['Severity'])  # Convert to Python int
+    number_of_accidents = int(row['Number_of_Accidents'])  # Convert to Python int
+
+    # Execute the query with converted data
+    cur.execute(insert_query, (year, severity, number_of_accidents))
 
 # Commit the transaction
 conn.commit()

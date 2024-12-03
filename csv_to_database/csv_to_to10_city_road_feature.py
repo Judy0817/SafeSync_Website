@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'location_db',
+    'database': 'road_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }

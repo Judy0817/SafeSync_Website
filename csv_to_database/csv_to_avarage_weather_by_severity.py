@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'weather_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -17,19 +17,6 @@ db_params = {
 # Connect to the PostgreSQL database
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
-
-# Create table for average weather conditions by severity if it does not exist
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS average_weather_conditions_by_severity (
-    severity INT PRIMARY KEY,
-    temperature FLOAT,
-    humidity FLOAT,
-    wind_speed FLOAT,
-    visibility FLOAT
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert data into the table
 insert_query = '''
@@ -39,7 +26,7 @@ ON CONFLICT (severity) DO NOTHING
 '''
 
 for index, row in data.iterrows():
-    cur.execute(insert_query, (row['Severity'], row['Temperature(F)'], row['Humidity(%)'], row['Wind_Speed(mph)'], row['Visibility(mi)']))
+    cur.execute(insert_query, (int(row['Severity']), int(row['Temperature(F)']), int(row['Humidity(%)']), int(row['Wind_Speed(mph)']), int(row['Visibility(mi)'])))
 
 # Commit the transaction
 conn.commit()

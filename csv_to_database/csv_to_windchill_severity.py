@@ -15,7 +15,7 @@ avg_wind_speed.rename(columns={'Wind_Speed(mph)': 'Average_Wind_Speed'}, inplace
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'weather_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -24,17 +24,6 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-# Create table for average wind speed data if it does not exist
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS average_wind_speed_data (
-    time_of_day VARCHAR(255),
-    severity INT,
-    average_wind_speed FLOAT,
-    PRIMARY KEY (time_of_day, severity)
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert average wind speed data into the table
 insert_query = '''

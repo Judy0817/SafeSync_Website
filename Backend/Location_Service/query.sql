@@ -2,7 +2,7 @@
 -- Create the Location_DB database
 CREATE DATABASE Location_DB;
 
--- DROP TABLE road_feature_accidents_By_Street;
+-- DROP TABLE road_feature_accidents;
 
 -- SELECT pid, usename, application_name, client_addr, client_hostname, backend_start, state
 -- FROM pg_stat_activity
@@ -50,4 +50,14 @@ CREATE TABLE IF NOT EXISTS top_10_streets_per_city (
 CREATE TABLE IF NOT EXISTS top_city (
     city VARCHAR(255) UNIQUE,
     accident_count INT
+)
+
+CREATE TABLE IF NOT EXISTS severity_distribution (
+    severity VARCHAR(255) UNIQUE,
+    count INT
+)
+
+CREATE TABLE IF NOT EXISTS total_accidents (
+    year INT PRIMARY KEY,
+    count INT
 )

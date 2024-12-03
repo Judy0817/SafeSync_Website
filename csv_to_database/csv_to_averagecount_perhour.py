@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'time_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -17,23 +17,6 @@ db_params = {
 # Connect to the PostgreSQL database
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
-
-# Drop the table if it exists
-drop_table_query = 'DROP TABLE IF EXISTS average_count_perhour'
-cur.execute(drop_table_query)
-conn.commit()
-
-# Create table for day-wise accident counts if it does not exist
-create_table_query = '''
-CREATE TABLE average_count_perhour (
-    day VARCHAR(50),
-    hour FLOAT,
-    accident_count FLOAT,
-    PRIMARY KEY (day, hour)  -- Combined primary key for day and hour
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert data into the table
 insert_query = '''

@@ -9,7 +9,7 @@ data_2020 = pd.read_csv(csv_file_2020)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'time_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -18,15 +18,6 @@ db_params = {
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
 
-# Create table for 2019 data if it does not exist
-create_table_query_2020 = '''
-CREATE TABLE IF NOT EXISTS accidents_2020 (
-    month VARCHAR(255) UNIQUE,
-    accidents INT
-)
-'''
-cur.execute(create_table_query_2020)
-conn.commit()
 
 # Insert data into the 2019 table
 insert_query_2020 = '''

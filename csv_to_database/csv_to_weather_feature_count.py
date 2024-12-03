@@ -9,7 +9,7 @@ data = pd.read_csv(csv_file)
 # Database connection parameters
 db_params = {
     'host': 'localhost',
-    'database': 'accident_dashboard',
+    'database': 'weather_db',
     'user': 'postgres',
     'password': 'Judy@0817'
 }
@@ -17,18 +17,6 @@ db_params = {
 # Connect to the PostgreSQL database
 conn = psycopg2.connect(**db_params)
 cur = conn.cursor()
-
-# Create table for weather feature accident counts if it does not exist
-create_table_query = '''
-CREATE TABLE IF NOT EXISTS weather_feature_accident_counts (
-    weather_feature VARCHAR(255),
-    all_values VARCHAR(255),
-    count INT,
-    PRIMARY KEY (weather_feature, all_values)
-)
-'''
-cur.execute(create_table_query)
-conn.commit()
 
 # Insert data into the table
 insert_query = '''
