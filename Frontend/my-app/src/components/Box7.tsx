@@ -12,7 +12,7 @@ const AccidentGraphs: React.FC = () => {
   useEffect(() => {
     const fetchData = async (year: number) => {
       try {
-        const response = await axios.get(`http://localhost:8083/accidents_${year}`);
+        const response = await axios.get(`http://localhost:8080/time/accidents_${year}`);
         setGraphData({
           labels: response.data.labels,
           datasets: [

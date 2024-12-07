@@ -55,7 +55,7 @@ const Box2: React.FC = () => {
     setLoading(true); // Set loading to true before fetching
     try {
       console.log('Fetching cities...');
-      const response = await axios.get('http://localhost:8081/top_city');
+      const response = await axios.get('http://localhost:8080/location/top_city');
       console.log('Response data:', response.data);
       if (Array.isArray(response.data)) {
         setCities(response.data);
@@ -78,7 +78,7 @@ const Box2: React.FC = () => {
     setLoading(true); // Set loading to true before fetching
     try {
       console.log('Fetching streets...');
-      const response = await axios.get('http://localhost:8081/top_street');
+      const response = await axios.get('http://localhost:8080/location/top_street');
       console.log('Response data:', response.data);
       if (Array.isArray(response.data)) {
         setStreets(response.data);
@@ -118,7 +118,7 @@ const Box2: React.FC = () => {
   const fetchData = async (endpoint: string) => {
     console.log('Fetching data for:', endpoint); // Debug log
     try {
-      const response = await axios.get(`http://localhost:8081/${endpoint}`);
+      const response = await axios.get(`http://localhost:8080/location/${endpoint}`);
       const responseData = response.data;
 
       console.log('Data Response:', responseData); // Log the response data for chart

@@ -24,36 +24,23 @@ const AlertSystem = () => {
   const [filteredStreets, setFilteredStreets] = useState<Street[]>([]); // Filtered streets based on search
   const [selectedStreet, setSelectedStreet] = useState<Street | null>(null); // Selected street from search
 
-  // Fetch street data from JSON format
+  // Function to fetch street data (weather data)
+  const fetchStreetData = async () => {
+    try {
+      const response = await fetch('/weatherData.json'); // Fetch data from the public folder
+      const data: Street[] = await response.json();
+      setStreetData(data);
+    } catch (error) {
+      console.error('Error fetching street data:', error);
+    }
+  };
+
+  // Fetch the street data every minute
   useEffect(() => {
-    const fetchStreetData = async () => {
-      try {
-        const response = await fetch('/average_street_weather.json');
-        const data = await response.json();
-
-        // Convert JSON object to array of Street objects
-        const streetsArray = Object.entries(data).map(([name, values]: [string, any]) => ({
-          name,
-          weather: {
-            condition: values.Weather_Condition,
-            temperature: values['Temperature(F)'],
-            humidity: values['Humidity(%)'],
-            windChill: values['Wind_Chill(F)'],
-            pressure: values['Pressure(in)'],
-            visibility: values['Visibility(mi)'],
-            windDirection: values.Wind_Direction,
-            windSpeed: values['Wind_Speed(mph)'],
-            precipitation: values['Precipitation(in)'],
-          },
-          severity: values.Severity,
-        }));
-
-        setStreetData(streetsArray);
-      } catch (error) {
-        console.error('Error fetching street data:', error);
-      }
-    };
     fetchStreetData();
+    const interval = setInterval(fetchStreetData, 60000); // Fetch data every 60 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
 
   // Update filtered streets based on search term
@@ -125,7 +112,7 @@ const AlertSystem = () => {
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {alerts.length > 0 ? (
               alerts.map((alert, index) => (
-                <li key={index} style={getAlertStyle(alert.severity)}>
+                <li key={index} style={getSeverityStyle(alert.severity)}>
                   <div>
                     <strong>{alert.name} has a severity of {alert.severity}!</strong>
                   </div>
@@ -150,29 +137,6 @@ const AlertSystem = () => {
       )}
     </div>
   );
-};
-
-// A helper function to style alerts based on severity
-const getAlertStyle = (severity: number) => {
-  let backgroundColor;
-  switch (true) {
-    case severity >= 5:
-      backgroundColor = '#f8d7da'; // Red for critical alerts
-      break;
-    case severity === 4:
-      backgroundColor = '#fff3cd'; // Yellow for moderate alerts
-      break;
-    default:
-      backgroundColor = '#f8f9fa'; // Default color for no alert
-      break;
-  }
-  return {
-    margin: '10px 0',
-    padding: '15px',
-    borderRadius: '8px',
-    backgroundColor,
-    border: '1px solid #ddd',
-  };
 };
 
 export default AlertSystem;

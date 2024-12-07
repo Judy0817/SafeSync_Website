@@ -96,6 +96,7 @@ func main() {
 	// router.GET("/severity_distribution", Severity_Distribution)
 
 	router.GET("/location/top_city", Top_city)
+	router.GET("/location/total_accidents", TotalAccidents)
 	router.GET("/location/top_street", Top_street)
 	router.GET("/location/top_10_streets_per_city", topStreetPerCity)
 	router.GET("/location/get_cities", getCities)

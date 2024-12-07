@@ -25,7 +25,7 @@ const PerHourAccidentsGraph: React.FC = () => {
         const fetchAccidentData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8083/per_hour_count'); // Replace with your API URL
+                const response = await axios.get('http://localhost:8080/time/per_hour_count'); // Replace with your API URL
                 const data = response.data;
 
                 // Prepare accident counts by day

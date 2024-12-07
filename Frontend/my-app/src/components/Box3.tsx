@@ -10,9 +10,9 @@ const AccidentGraphs: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response2019 = await axios.get('http://localhost:8083/accidents_2019');
-        const response2020 = await axios.get('http://localhost:8083/accidents_2020');
-        const response2021 = await axios.get('http://localhost:8083/accidents_2021');
+        const response2019 = await axios.get('http://localhost:8080/time/accidents_2019');
+        const response2020 = await axios.get('http://localhost:8080/time/accidents_2020');
+        const response2021 = await axios.get('http://localhost:8080/time/accidents_2021');
 
         setData2019({
           labels: response2019.data.labels,

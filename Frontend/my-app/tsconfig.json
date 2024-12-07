@@ -22,6 +22,7 @@
     "types": ["node", "react", "react-dom"]
   },
   "include": [
-    "src"
+    "src",
+    "src/**/*.tsx"
   ]
 }

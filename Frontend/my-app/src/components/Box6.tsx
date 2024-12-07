@@ -44,7 +44,7 @@ const Box6 = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8083/total_accidents'); // Update the endpoint if needed
+      const response = await axios.get('http://localhost:8080/location/total_accidents'); // Update the endpoint if needed
       const responseData = response.data;
 
       console.log('Fetched data:', responseData);

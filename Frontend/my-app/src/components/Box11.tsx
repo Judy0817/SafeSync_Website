@@ -9,7 +9,7 @@ const WindSpeedGraph: React.FC = () => {
   useEffect(() => {
     const fetchWindSpeedData = async () => {
       try {
-        const response = await axios.get('http://localhost:8084/average_wind_speed'); // Update this endpoint as necessary
+        const response = await axios.get('http://localhost:8080/weather/average_wind_speed'); // Update this endpoint as necessary
         const data = response.data.average_wind_speeds;
 
         // Prepare labels and data for the chart

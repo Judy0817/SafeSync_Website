@@ -9,7 +9,7 @@ const AverageWeatherConditions: React.FC = () => {
   useEffect(() => {
     const fetchWeatherData = async () => {
       try {
-        const response = await axios.get('http://localhost:8084/average_weather_severity');
+        const response = await axios.get('http://localhost:8080/weather/average_weather_severity');
         setChartData({
           labels: response.data.severities,
           datasets: [

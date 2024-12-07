@@ -9,7 +9,7 @@ const AccidentMap = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:8081/location_data_all');
+        const response = await fetch('http://localhost:8080/location/location_data_all');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
