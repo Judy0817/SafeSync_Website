@@ -70,10 +70,10 @@ func main() {
 	router.Use(cors.Default())
 
 	// Weather Features
-	router.GET("/weather_conditions", WeatherConditions)
-	router.GET("/weather_conditions_count", WeatherConditionsCount)
-	router.GET("/average_weather_severity", AverageWeatherConditions)
-	router.GET("/average_wind_speed", AverageWindSpeeds)
+	router.GET("/weather/weather_conditions", WeatherConditions)
+	router.GET("/weather/weather_conditions_count", WeatherConditionsCount)
+	router.GET("/weather/average_weather_severity", AverageWeatherConditions)
+	router.GET("/weather/average_wind_speed", AverageWindSpeeds)
 
 	router.GET("/database", getDatabaseName)
 

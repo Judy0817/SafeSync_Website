@@ -74,15 +74,15 @@ func main() {
 	router.Use(cors.Default())
 
 	// Time based
-	router.GET("/accidents_2019", getAccidentsDataHandler(2019))
-	router.GET("/accidents_2020", getAccidentsDataHandler(2020))
-	router.GET("/accidents_2021", getAccidentsDataHandler(2021))
-	router.GET("/accidents_2022", getAccidentsDataHandler(2022))
-	router.GET("/accidents_2023", getAccidentsDataHandler(2023))
-	router.GET("/total_accidents", TotalAccidents)
-	router.GET("/day_wise_count", GetDaywiseAccidentCounts)
-	router.GET("/per_hour_count", PerHourAccidentCounts)
-	router.GET("/per_severity_year_count", PerSeverityAccidentCounts)
+	router.GET("/time/accidents_2019", getAccidentsDataHandler(2019))
+	router.GET("/time/accidents_2020", getAccidentsDataHandler(2020))
+	router.GET("/time/accidents_2021", getAccidentsDataHandler(2021))
+	router.GET("/time/accidents_2022", getAccidentsDataHandler(2022))
+	router.GET("/time/accidents_2023", getAccidentsDataHandler(2023))
+	router.GET("/time/total_accidents", TotalAccidents)
+	router.GET("/time/day_wise_count", GetDaywiseAccidentCounts)
+	router.GET("/time/per_hour_count", PerHourAccidentCounts)
+	router.GET("/time/per_severity_year_count", PerSeverityAccidentCounts)
 
 	router.GET("/database", getDatabaseName)
 

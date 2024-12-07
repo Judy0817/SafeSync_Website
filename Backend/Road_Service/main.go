@@ -81,11 +81,11 @@ func main() {
 	router.Use(cors.Default())
 
 	// Road Features
-	router.GET("/road_features", Road_Features)
-	router.GET("/road_feature_city", GetRoadFeaturesByCity)
-	router.GET("/road_feature_street", GetRoadFeaturesByStreet)
-	router.GET("/top3_road_features", Top3_RoadFeatures)
-	router.GET("/road_feature_by_severity", GetRoadFeaturesBySeverity)
+	router.GET("/road/road_features", Road_Features)
+	router.GET("/road/road_feature_city", GetRoadFeaturesByCity)
+	router.GET("/road/road_feature_street", GetRoadFeaturesByStreet)
+	router.GET("/road/top3_road_features", Top3_RoadFeatures)
+	router.GET("/road/road_feature_by_severity", GetRoadFeaturesBySeverity)
 
 	router.GET("/database", getDatabaseName)
 

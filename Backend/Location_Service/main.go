@@ -87,13 +87,21 @@ func main() {
 	router.Use(cors.Default())
 
 	// Location
-	router.GET("/top_city", Top_city)
-	router.GET("/top_street", Top_street)
-	router.GET("/top_10_streets_per_city", topStreetPerCity)
-	router.GET("/get_cities", getCities)
-	router.GET("/location_data", LocationAccidentData)
-	router.GET("/location_data_all", LocationAccidentDataAll)
-	router.GET("/severity_distribution", Severity_Distribution)
+	// router.GET("/top_city", Top_city)
+	// router.GET("/top_street", Top_street)
+	// router.GET("/top_10_streets_per_city", topStreetPerCity)
+	// router.GET("/get_cities", getCities)
+	// router.GET("/location_data", LocationAccidentData)
+	// router.GET("/location_data_all", LocationAccidentDataAll)
+	// router.GET("/severity_distribution", Severity_Distribution)
+
+	router.GET("/location/top_city", Top_city)
+	router.GET("/location/top_street", Top_street)
+	router.GET("/location/top_10_streets_per_city", topStreetPerCity)
+	router.GET("/location/get_cities", getCities)
+	router.GET("/location/location_data", LocationAccidentData)
+	router.GET("/location/location_data_all", LocationAccidentDataAll)
+	router.GET("/location/severity_distribution", Severity_Distribution)
 
 	router.GET("/database", getDatabaseName)
 
