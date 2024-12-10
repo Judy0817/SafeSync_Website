@@ -2,9 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -46,6 +49,11 @@ type AverageWindSpeed struct {
 	AverageWindSpeed float64 `json:"average_wind_speed"`
 }
 
+type GeoLocation struct {
+	Latitude  float64 `json:"lat"`
+	Longitude float64 `json:"lon"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -75,10 +83,203 @@ func main() {
 	router.GET("/weather/average_weather_severity", AverageWeatherConditions)
 	router.GET("/weather/average_wind_speed", AverageWindSpeeds)
 
+	router.GET("/weather/geolocation", GetGeoLocation)  // For geolocation of street
+	router.GET("/weather/weather_data", GetWeatherData) // To get weather data by geolocation
+
 	router.GET("/database", getDatabaseName)
 
 	fmt.Println("Server is running on port 8084")
 	log.Fatal(http.ListenAndServe(":8084", router))
+}
+
+func formatToTwoDecimalPlaces(value float64) string {
+	return fmt.Sprintf("%.2f", value)
+}
+
+func kelvinToFahrenheit(kelvin float64) float64 {
+	return (kelvin-273.15)*9/5 + 32
+}
+
+func celsiusToFahrenheit(celsius float64) float64 {
+	return (celsius * 9 / 5) + 32
+}
+
+func hpaToInHg(hpa float64) float64 {
+	return hpa / 33.8639
+}
+
+func metersToMiles(meters float64) float64 {
+	return meters / 1609.344
+}
+
+func mpsToMph(mps float64) float64 {
+	return mps * 2.23694
+}
+
+func getWindDirection(deg float64) string {
+	// Mapping degree ranges to cardinal directions
+	if deg >= 0 && deg < 22.5 {
+		return "North"
+	} else if deg >= 22.5 && deg < 45 {
+		return "NNE"
+	} else if deg >= 45 && deg < 67.5 {
+		return "NE"
+	} else if deg >= 67.5 && deg < 90 {
+		return "ENE"
+	} else if deg >= 90 && deg < 112.5 {
+		return "East"
+	} else if deg >= 112.5 && deg < 135 {
+		return "ESE"
+	} else if deg >= 135 && deg < 157.5 {
+		return "SE"
+	} else if deg >= 157.5 && deg < 180 {
+		return "SSE"
+	} else if deg >= 180 && deg < 202.5 {
+		return "South"
+	} else if deg >= 202.5 && deg < 225 {
+		return "SSW"
+	} else if deg >= 225 && deg < 247.5 {
+		return "SW"
+	} else if deg >= 247.5 && deg < 270 {
+		return "WSW"
+	} else if deg >= 270 && deg < 292.5 {
+		return "West"
+	} else if deg >= 292.5 && deg < 315 {
+		return "WNW"
+	} else if deg >= 315 && deg < 337.5 {
+		return "NW"
+	} else if deg >= 337.5 && deg < 360 {
+		return "North"
+	} else {
+		// Handle cases where wind direction is calm or variable
+		return "Calm"
+	}
+}
+
+func GetWeatherData(c *gin.Context) {
+	latitude := c.DefaultQuery("latitude", "")
+	longitude := c.DefaultQuery("longitude", "")
+	if latitude == "" || longitude == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "latitude and longitude parameters are required"})
+		return
+	}
+
+	// Using OpenWeatherMap API for weather data
+	apiKey := "2601fcbe1411562dc72d4050e299d2c7" // Replace with your actual API key
+	apiURL := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s", latitude, longitude, apiKey)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get weather data"})
+		return
+	}
+	defer resp.Body.Close()
+
+	var weatherData map[string]interface{}
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	if err := json.Unmarshal(body, &weatherData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse weather data"})
+		return
+	}
+
+	// Parse relevant data
+	weather := weatherData["weather"].([]interface{})[0].(map[string]interface{})["description"]
+	main := weatherData["main"].(map[string]interface{})
+	temperature := main["temp"].(float64)
+	humidity := main["humidity"].(float64)
+	pressure := main["pressure"].(float64)
+
+	// Safely handle the visibility field, ensuring it exists and is a float64
+	var visibility float64
+	if vis, ok := weatherData["visibility"].(float64); ok {
+		visibility = vis
+	} else {
+		visibility = 0.0 // Default value in case visibility is not present
+	}
+
+	wind := weatherData["wind"].(map[string]interface{})
+	windSpeed := wind["speed"].(float64)
+	windDirection := wind["deg"].(float64)
+
+	// Safely handle the rain field, ensuring it exists
+	rain := weatherData["rain"]
+	precipitation := 0.0
+	if rain != nil {
+		// Rain may contain "1h" or "3h", representing hourly or 3-hourly precipitation.
+		if rainData, ok := rain.(map[string]interface{}); ok {
+			if p, ok := rainData["1h"].(float64); ok {
+				precipitation = p
+			}
+		}
+	}
+
+	// Convert values to appropriate units
+	temperatureFahrenheit := kelvinToFahrenheit(temperature)
+	windChillCelsius := 13.12 + 0.6215*(temperature-273.15) - 11.37*(windSpeed*3.6)*0.16 + 0.3965*(temperature-273.15)*(windSpeed*3.6)*0.16
+	windChillFahrenheit := celsiusToFahrenheit(windChillCelsius)
+	pressureInHg := hpaToInHg(pressure)
+	visibilityMiles := metersToMiles(visibility)
+	windSpeedMph := mpsToMph(windSpeed)
+
+	// Format all values to two decimal places
+	c.JSON(http.StatusOK, gin.H{
+		"weather":           weather,
+		"temperature(F)":    formatToTwoDecimalPlaces(temperatureFahrenheit),
+		"humidity(%)":       formatToTwoDecimalPlaces(humidity),
+		"wind_chill(F)":     formatToTwoDecimalPlaces(windChillFahrenheit),
+		"pressure(in)":      formatToTwoDecimalPlaces(pressureInHg),
+		"visibility(mi)":    formatToTwoDecimalPlaces(visibilityMiles),
+		"wind_direction":    getWindDirection(windDirection),
+		"wind_speed(mph)":   formatToTwoDecimalPlaces(windSpeedMph),
+		"precipitation(in)": formatToTwoDecimalPlaces(precipitation),
+	})
+}
+
+func GetGeoLocation(c *gin.Context) {
+	streetName := c.DefaultQuery("street_name", "")
+	if streetName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "street_name parameter is required"})
+		return
+	}
+
+	// Encode the street name to handle special characters properly
+	encodedStreetName := url.QueryEscape(streetName)
+
+	// Using Nominatim API for geolocation (OpenStreetMap)
+	apiURL := fmt.Sprintf("https://nominatim.openstreetmap.org/search?q=%s&format=json", encodedStreetName)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get geolocation"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var geoResults []map[string]interface{}
+	if err := json.Unmarshal(body, &geoResults); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse geolocation response"})
+		return
+	}
+
+	// If no results, return error
+	if len(geoResults) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Street not found"})
+		return
+	}
+
+	// Get the first result, assuming it's the most relevant one
+	lat := geoResults[0]["lat"]
+	lon := geoResults[0]["lon"]
+
+	// Convert lat and lon to float64
+	latitude, _ := lat.(string)
+	longitude, _ := lon.(string)
+
+	c.JSON(http.StatusOK, gin.H{
+		"latitude":  latitude,
+		"longitude": longitude,
+	})
 }
 
 func getDatabaseName(c *gin.Context) {

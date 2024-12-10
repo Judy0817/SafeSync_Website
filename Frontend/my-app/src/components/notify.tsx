@@ -1,139 +1,134 @@
 import React, { useState, useEffect } from 'react';
 
-// Define the Street interface
-interface Street {
-  name: string;
-  weather: {
-    condition: string;
-    temperature: number;
-    humidity: number;
-    windChill: number;
-    pressure: number;
-    visibility: number;
-    windDirection: string;
-    windSpeed: number;
-    precipitation: number;
-  };
-  severity: number;
+interface WeatherData {
+  condition: string;
+  temperature: number;
+  humidity: number;
+  windChill: number;
+  pressure: number;
+  visibility: number;
+  windDirection: string;
+  windSpeed: number;
+  precipitation: number;
 }
 
 const AlertSystem = () => {
-  const [streetData, setStreetData] = useState<Street[]>([]); // All street data
-  const [alerts, setAlerts] = useState<Street[]>([]); // Alerts for the selected street
-  const [searchTerm, setSearchTerm] = useState(''); // Search input
-  const [filteredStreets, setFilteredStreets] = useState<Street[]>([]); // Filtered streets based on search
-  const [selectedStreet, setSelectedStreet] = useState<Street | null>(null); // Selected street from search
+  const [streetName, setStreetName] = useState(''); // Street name entered by the user
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null); // Weather data for the selected street
+  const [severity, setSeverity] = useState<number | null>(null); // Severity predicted by the model
+  const [errorMessage, setErrorMessage] = useState(''); // Error message
 
-  // Function to fetch street data (weather data)
-  const fetchStreetData = async () => {
+  // Function to fetch the geolocation (latitude and longitude) based on the street name
+  const fetchGeolocation = async (streetName: string) => {
     try {
-      const response = await fetch('/weatherData.json'); // Fetch data from the public folder
-      const data: Street[] = await response.json();
-      setStreetData(data);
+      const response = await fetch(`http://localhost:8080/weather/geolocation?street_name=${streetName}`);
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        // If latitude and longitude are returned, fetch the weather data
+        fetchWeatherData(data.latitude, data.longitude);
+      } else {
+        setErrorMessage('No geolocation data found for this street.');
+      }
     } catch (error) {
-      console.error('Error fetching street data:', error);
+      console.error('Error fetching geolocation:', error);
+      setErrorMessage('Error fetching geolocation data.');
     }
   };
 
-  // Fetch the street data every minute
-  useEffect(() => {
-    fetchStreetData();
-    const interval = setInterval(fetchStreetData, 60000); // Fetch data every 60 seconds
+  // Function to fetch weather data using the latitude and longitude
+  const fetchWeatherData = async (latitude: number, longitude: number) => {
+    try {
+      const response = await fetch(`http://localhost:8080/weather/weather_data?latitude=${latitude}&longitude=${longitude}`);
+      const data = await response.json();
+      console.log('Fetched weather data:', data);  // Log the raw data
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
+      // Ensure that the data fields are properly parsed and converted to numbers where needed
+      setWeatherData({
+        condition: data.weather || 'N/A', // Ensure fallback if data.weather is undefined
+        temperature: parseFloat(data["temperature(F)"]) || 0, // Ensure parsing the value as number
+        humidity: parseFloat(data["humidity(%)"]) || 0, // Ensure parsing as number
+        windChill: parseFloat(data["wind_chill(F)"]) || 0, // Ensure parsing as number
+        pressure: parseFloat(data["pressure(in)"]) || 0, // Ensure parsing as number
+        visibility: parseFloat(data["visibility(mi)"]) || 0, // Ensure parsing as number
+        windDirection: data.wind_direction || 'N/A', // Ensure fallback if wind_direction is missing
+        windSpeed: parseFloat(data["wind_speed(mph)"]) || 0, // Ensure parsing as number
+        precipitation: parseFloat(data["precipitation(in)"]) || 0, // Ensure parsing as number
+      });
 
-  // Update filtered streets based on search term
-  useEffect(() => {
-    if (searchTerm) {
-      const matches = streetData.filter(street =>
-        street.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredStreets(matches);
-    } else {
-      setFilteredStreets([]);
+      // Simulate severity prediction (for testing)
+      const predictedSeverity = 3.5; // Hardcoded for now. Replace with actual model prediction.
+      setSeverity(predictedSeverity);
+
+      setErrorMessage(''); // Reset any previous error message
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setErrorMessage('Error fetching weather data.');
     }
-  }, [searchTerm, streetData]);
-
-  // Handle street selection and display alerts for the selected street
-  const handleStreetSelect = (street: Street) => {
-    setSelectedStreet(street);
-    setAlerts([street]); // Display selected street's severity alert
-    setSearchTerm(''); // Clear search term after selection
-    setFilteredStreets([]); // Clear filtered results after selection
   };
 
-  // Helper function to apply severity-based styles
-  const getSeverityStyle = (severity: number) => {
-    if (severity >= 4) {
-      return {
-        color: 'red',
-        fontWeight: 'bold',
-      };
+  // Handle the search form submit
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (streetName.trim() === '') {
+      setErrorMessage('Please enter a street name.');
+      return;
     }
-    return {
-      color: 'green',
-    };
+    fetchGeolocation(streetName); // Fetch the geolocation based on the street name
+  };
+
+  // Function to determine the severity color
+  const getSeverityColor = (severity: number | null) => {
+    if (severity === null) return 'black'; // Default color if severity is not available
+    return severity > 3.0 ? 'red' : 'green';
   };
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Street Alert Monitoring</h2>
-      <p>Search and select a street to view alerts based on severity...</p>
+      <h2>Street Weather Information</h2>
 
-      {/* Search Bar for selecting a street */}
-      <input
-        type="text"
-        placeholder="Search street..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
-      />
+      {/* Search Form */}
+      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
+        <input
+          type="text"
+          placeholder="Enter street name"
+          value={streetName}
+          onChange={(e) => setStreetName(e.target.value)}
+          style={{ padding: '8px', flex: 1}}
+        />
+        <button type="submit" style={{ padding: '8px', width: '150px' }}>
+          Get Weather Data
+        </button>
+      </form>
 
-      {/* Dropdown for filtered streets */}
-      {filteredStreets.length > 0 && (
-        <ul style={{ listStyle: 'none', padding: 0, border: '1px solid #ddd', borderRadius: '4px' }}>
-          {filteredStreets.map((street, index) => (
-            <li
-              key={index}
-              onClick={() => handleStreetSelect(street)}
-              style={{ padding: '10px', cursor: 'pointer', backgroundColor: '#f8f9fa', borderBottom: '1px solid #ddd' }}
-            >
-              {street.name}
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Error Message */}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
-      {/* Display alert for the selected street */}
-      {selectedStreet ? (
+      {/* Display Weather Data */}
+      {weatherData ? (
         <div style={{ marginTop: '20px' }}>
-          <h3>Alerts for {selectedStreet.name}</h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {alerts.length > 0 ? (
-              alerts.map((alert, index) => (
-                <li key={index} style={getSeverityStyle(alert.severity)}>
-                  <div>
-                    <strong>{alert.name} has a severity of {alert.severity}!</strong>
-                  </div>
-                  <div>Weather: {alert.weather.condition}</div>
-                  <div>Temperature: {alert.weather.temperature}°F</div>
-                  <div>Humidity: {alert.weather.humidity}%</div>
-                  <div>Wind Chill: {alert.weather.windChill}°F</div>
-                  <div>Pressure: {alert.weather.pressure} in</div>
-                  <div>Visibility: {alert.weather.visibility} mi</div>
-                  <div>Wind Direction: {alert.weather.windDirection}</div>
-                  <div>Wind Speed: {alert.weather.windSpeed} mph</div>
-                  <div>Precipitation: {alert.weather.precipitation} in</div>
-                </li>
-              ))
-            ) : (
-              <li>No alerts to display for this street</li>
-            )}
+          <h3>Weather for {streetName}</h3>
+          <ul>
+            <li>Weather Condition: {weatherData.condition}</li>
+            <li>Temperature: {weatherData.temperature.toFixed(2)} °F</li>
+            <li>Humidity: {weatherData.humidity}%</li>
+            <li>Wind Chill: {weatherData.windChill.toFixed(2)} °F</li>
+            <li>Pressure: {weatherData.pressure} in</li>
+            <li>Visibility: {weatherData.visibility} mi</li>
+            <li>Wind Direction: {weatherData.windDirection}</li>
+            <li>Wind Speed: {weatherData.windSpeed} mph</li>
+            <li>Precipitation: {weatherData.precipitation} in</li>
           </ul>
+
+          {/* Display Severity */}
+          {severity !== null && (
+            <div style={{ color: getSeverityColor(severity) }}>
+              <h4>Predicted Severity: {severity.toFixed(2)}</h4>
+            </div>
+          )}
         </div>
       ) : (
-        <p>Select a street to view alerts</p>
+        <p></p>
       )}
     </div>
   );
