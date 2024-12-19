@@ -250,7 +250,7 @@ func GetWeatherData(c *gin.Context) {
 	}
 
 	// Save the data to a JSON file
-	file, err := os.Create("weather_data.json")
+	file, err := os.Create("model_input.json")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create JSON file"})
 		return
