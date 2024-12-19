@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -54,6 +55,19 @@ type GeoLocation struct {
 	Longitude float64 `json:"lon"`
 }
 
+type ModelOutputWeatherData struct {
+	Humidity      string `json:"humidity(%)"`
+	Precipitation string `json:"precipitation(in)"`
+	Pressure      string `json:"pressure(in)"`
+	Temperature   string `json:"temperature(F)"`
+	Visibility    string `json:"visibility(mi)"`
+	Weather       string `json:"weather"`
+	WindChill     string `json:"wind_chill(F)"`
+	WindDirection string `json:"wind_direction"`
+	WindSpeed     string `json:"wind_speed(mph)"`
+	Severity      string `json:"severity"`
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
@@ -87,6 +101,7 @@ func main() {
 	router.GET("/weather/weather_data", GetWeatherData) // To get weather data by geolocation
 
 	router.GET("/database", getDatabaseName)
+	router.GET("/weather/model_output", getWeatherDataFromModelOutput) // Add this line to use the function
 
 	fmt.Println("Server is running on port 8084")
 	log.Fatal(http.ListenAndServe(":8084", router))
@@ -222,7 +237,7 @@ func GetWeatherData(c *gin.Context) {
 	windSpeedMph := mpsToMph(windSpeed)
 
 	// Format all values to two decimal places
-	c.JSON(http.StatusOK, gin.H{
+	weatherDataFormatted := gin.H{
 		"weather":           weather,
 		"temperature(F)":    formatToTwoDecimalPlaces(temperatureFahrenheit),
 		"humidity(%)":       formatToTwoDecimalPlaces(humidity),
@@ -232,7 +247,25 @@ func GetWeatherData(c *gin.Context) {
 		"wind_direction":    getWindDirection(windDirection),
 		"wind_speed(mph)":   formatToTwoDecimalPlaces(windSpeedMph),
 		"precipitation(in)": formatToTwoDecimalPlaces(precipitation),
-	})
+	}
+
+	// Save the data to a JSON file
+	file, err := os.Create("weather_data.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create JSON file"})
+		return
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(weatherDataFormatted); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write data to JSON file"})
+		return
+	}
+
+	// Send response
+	c.JSON(http.StatusOK, weatherDataFormatted)
 }
 
 func GetGeoLocation(c *gin.Context) {
@@ -371,7 +404,38 @@ func WeatherConditionsCount(c *gin.Context) {
 		"data":            data,
 	})
 }
+func getWeatherDataFromModelOutput(c *gin.Context) {
+	// Open the weather data JSON file
+	file, err := os.Open("model_output.json") // Ensure the file is in the same directory
+	if err != nil {
+		log.Println("Error opening weather data file:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open weather data file"})
+		return
+	}
+	defer file.Close()
 
+	// Decode the weather data from the file
+	var weatherData ModelOutputWeatherData
+	if err := json.NewDecoder(file).Decode(&weatherData); err != nil {
+		log.Println("Error decoding weather data:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not decode weather data"})
+		return
+	}
+
+	// Respond with the fetched weather data
+	c.JSON(http.StatusOK, gin.H{
+		"humidity":      weatherData.Humidity,
+		"precipitation": weatherData.Precipitation,
+		"pressure":      weatherData.Pressure,
+		"temperature":   weatherData.Temperature,
+		"visibility":    weatherData.Visibility,
+		"weather":       weatherData.Weather,
+		"windChill":     weatherData.WindChill,
+		"windDirection": weatherData.WindDirection,
+		"windSpeed":     weatherData.WindSpeed,
+		"severity":      weatherData.Severity,
+	})
+}
 func AverageWeatherConditions(c *gin.Context) {
 	// Query the database for average weather conditions by severity
 	rows, err := db.Query("SELECT severity, temperature, humidity, wind_speed, visibility FROM average_weather_conditions_by_severity")

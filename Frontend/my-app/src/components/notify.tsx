@@ -1,4 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
+interface WeatherDataModel {
+  condition: string;
+  temperature: number;
+  humidity: number;
+  windChill: number;
+  pressure: number;
+  visibility: number;
+  windDirection: string;
+  windSpeed: number;
+  precipitation: number;
+  severity: number;  // Added severity field
+}
 
 interface WeatherData {
   condition: string;
@@ -14,11 +27,11 @@ interface WeatherData {
 
 const AlertSystem = () => {
   const [streetName, setStreetName] = useState(''); // Street name entered by the user
+  const [weatherDataModel, setWeatherDataModel] = useState<WeatherDataModel | null>(null); // Weather data for the selected street
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null); // Weather data for the selected street
-  const [severity, setSeverity] = useState<number | null>(null); // Severity predicted by the model
   const [errorMessage, setErrorMessage] = useState(''); // Error message
 
-  // Function to fetch the geolocation (latitude and longitude) based on the street name
+
   const fetchGeolocation = async (streetName: string) => {
     try {
       const response = await fetch(`http://localhost:8080/weather/geolocation?street_name=${streetName}`);
@@ -36,7 +49,6 @@ const AlertSystem = () => {
     }
   };
 
-  // Function to fetch weather data using the latitude and longitude
   const fetchWeatherData = async (latitude: number, longitude: number) => {
     try {
       const response = await fetch(`http://localhost:8080/weather/weather_data?latitude=${latitude}&longitude=${longitude}`);
@@ -56,9 +68,33 @@ const AlertSystem = () => {
         precipitation: parseFloat(data["precipitation(in)"]) || 0, // Ensure parsing as number
       });
 
-      // Simulate severity prediction (for testing)
-      const predictedSeverity = 3.5; // Hardcoded for now. Replace with actual model prediction.
-      setSeverity(predictedSeverity);
+      setErrorMessage(''); // Reset any previous error message
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      setErrorMessage('Error fetching weather data.');
+    }
+  };
+
+  // Function to fetch weather data from the backend (static JSON file)
+  const fetchWeatherDataFromModel = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/weather/model_output`);
+      const data = await response.json();
+      console.log('Fetched weather data:', data);  // Log the raw data
+
+      // Ensure that the data fields are properly parsed and converted to numbers where needed
+      setWeatherDataModel({
+        condition: data.weather || 'N/A', // Ensure fallback if data.weather is undefined
+        temperature: parseFloat(data["temperature"]) || 0, // Ensure parsing the value as number
+        humidity: parseFloat(data["humidity"]) || 0, // Ensure parsing as number
+        windChill: parseFloat(data["windChill"]) || 0, // Ensure parsing as number
+        pressure: parseFloat(data["pressure"]) || 0, // Ensure parsing as number
+        visibility: parseFloat(data["visibility"]) || 0, // Ensure parsing as number
+        windDirection: data.windDirection || 'N/A', // Ensure fallback if wind_direction is missing
+        windSpeed: parseFloat(data["windSpeed"]) || 0, // Ensure parsing as number
+        precipitation: parseFloat(data["precipitation"]) || 0, // Ensure parsing as number
+        severity: parseFloat(data["severity"]) || 0, // Ensure parsing severity as number
+      });
 
       setErrorMessage(''); // Reset any previous error message
     } catch (error) {
@@ -66,6 +102,7 @@ const AlertSystem = () => {
       setErrorMessage('Error fetching weather data.');
     }
   };
+  
 
   // Handle the search form submit
   const handleSearchSubmit = (event: React.FormEvent) => {
@@ -74,13 +111,14 @@ const AlertSystem = () => {
       setErrorMessage('Please enter a street name.');
       return;
     }
-    fetchGeolocation(streetName); // Fetch the geolocation based on the street name
+    fetchGeolocation(streetName);
+    fetchWeatherDataFromModel(); // Fetch the weather data based on the static JSON file
   };
 
   // Function to determine the severity color
   const getSeverityColor = (severity: number | null) => {
     if (severity === null) return 'black'; // Default color if severity is not available
-    return severity > 3.0 ? 'red' : 'green';
+    return severity >= 4.0 ? 'red' : 'green'; // Severity threshold for red (warning) or green (safe)
   };
 
   return (
@@ -94,7 +132,7 @@ const AlertSystem = () => {
           placeholder="Enter street name"
           value={streetName}
           onChange={(e) => setStreetName(e.target.value)}
-          style={{ padding: '8px', flex: 1}}
+          style={{ padding: '8px', flex: 1 }}
         />
         <button type="submit" style={{ padding: '8px', width: '150px' }}>
           Get Weather Data
@@ -108,22 +146,24 @@ const AlertSystem = () => {
       {weatherData ? (
         <div style={{ marginTop: '20px' }}>
           <h3>Weather for {streetName}</h3>
-          <ul>
-            <li>Weather Condition: {weatherData.condition}</li>
-            <li>Temperature: {weatherData.temperature.toFixed(2)} °F</li>
-            <li>Humidity: {weatherData.humidity}%</li>
-            <li>Wind Chill: {weatherData.windChill.toFixed(2)} °F</li>
-            <li>Pressure: {weatherData.pressure} in</li>
-            <li>Visibility: {weatherData.visibility} mi</li>
-            <li>Wind Direction: {weatherData.windDirection}</li>
-            <li>Wind Speed: {weatherData.windSpeed} mph</li>
-            <li>Precipitation: {weatherData.precipitation} in</li>
-          </ul>
+          {weatherDataModel && (
+            <ul>
+              <li>Weather Condition: {weatherDataModel.condition}</li>
+              <li>Temperature: {weatherDataModel.temperature.toFixed(2)} °F</li>
+              <li>Humidity: {weatherData.humidity}%</li>
+              <li>Wind Chill: {weatherData.windChill.toFixed(2)} °F</li>
+              <li>Pressure: {weatherData.pressure} in</li>
+              <li>Visibility: {weatherData.visibility} mi</li>
+              <li>Wind Direction: {weatherData.windDirection}</li>
+              <li>Wind Speed: {weatherData.windSpeed} mph</li>
+              <li>Precipitation: {weatherData.precipitation} in</li>
+            </ul>
+          )}
 
           {/* Display Severity */}
-          {severity !== null && (
-            <div style={{ color: getSeverityColor(severity) }}>
-              <h4>Predicted Severity: {severity.toFixed(2)}</h4>
+          {weatherDataModel && weatherDataModel.severity !== null && (
+            <div style={{ color: getSeverityColor(weatherDataModel.severity) }}>
+              <h4>Predicted Severity: {weatherDataModel.severity.toFixed(2)}</h4>
             </div>
           )}
         </div>

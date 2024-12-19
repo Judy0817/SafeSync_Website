@@ -1,0 +1,11 @@
+{
+  "humidity(%)": "77.00",
+  "precipitation(in)": "0.00",
+  "pressure(in)": "30.33",
+  "temperature(F)": "35.19",
+  "visibility(mi)": "6.21",
+  "weather": "overcast clouds",
+  "wind_chill(F)": "29.17",
+  "wind_direction": "West",
+  "wind_speed(mph)": "5.75"
+}
