@@ -1,11 +1,11 @@
 {
-  "humidity(%)": "75.00",
-  "precipitation(in)": "0.00",
-  "pressure(in)": "29.77",
-  "temperature(F)": "85.98",
+  "humidity(%)": "77.00",
+  "precipitation(in)": "1.07",
+  "pressure(in)": "30.24",
+  "temperature(F)": "40.46",
   "visibility(mi)": "6.21",
-  "weather": "broken clouds",
-  "wind_chill(F)": "91.09",
-  "wind_direction": "WSW",
-  "wind_speed(mph)": "7.96"
+  "weather": "moderate rain",
+  "wind_chill(F)": "40.57",
+  "wind_direction": "South",
+  "wind_speed(mph)": "4.61"
 }
