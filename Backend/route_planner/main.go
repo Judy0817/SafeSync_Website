@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 // Structs for Google API and Weather data
@@ -27,16 +28,18 @@ type WeatherData struct {
 }
 
 type RoadFeatures struct {
-	TemperatureF     float64 `json:"temperature_F"`
-	WindChillF       float64 `json:"wind_chill_F"`
-	HumidityPercent  float64 `json:"humidity_percent"`
-	PressureIn       float64 `json:"pressure_in"`
-	VisibilityMi     float64 `json:"visibility_mi"`
-	WindDirection    string  `json:"wind_direction"`
-	WindSpeedMph     float64 `json:"wind_speed_mph"`
-	PrecipitationIn  float64 `json:"precipitation_in"`
-	WeatherCondition string  `json:"weather_condition"`
-	Severity         string  `json:"severity"`
+	Bump            bool   `json:"Bump"`
+	Crossing        bool   `json:"Crossing"`
+	Give_Way        bool   `json:"Give_Way"`
+	Junction        bool   `json:"Junction"`
+	No_Exit         bool   `json:"No_Exit"`
+	Railway         bool   `json:"Railway"`
+	Roundabout      bool   `json:"Roundabout"`
+	Station         bool   `json:"Station"`
+	Stop            bool   `json:"Stop"`
+	Traffic_Calming bool   `json:"Traffic_Calming"`
+	Traffic_Signal  bool   `json:"Traffic_Signal"`
+	Severity        string `json:"Severity"`
 }
 
 type Place struct {
@@ -118,27 +121,31 @@ func getWeatherData(placeID string) (WeatherData, error) {
 	return weatherData, nil
 }
 
-// Helper function to fetch road features (same endpoint as weather data)
+// Helper function to fetch road features from a local JSON file
 func getRoadFeatures(placeID string) (RoadFeatures, error) {
-	// Construct the URL to fetch road features for this place (use your existing /weather/weather_data endpoint)
-	url := fmt.Sprintf("http://localhost:8080/weather/weather_data?place_id=%s", placeID)
-
-	// Send request to your road features API
-	resp, err := http.Get(url)
+	// Read the JSON file containing road features
+	file, err := os.Open("street_road_features_with_severity.json")
 	if err != nil {
 		return RoadFeatures{}, err
 	}
-	defer resp.Body.Close()
+	defer file.Close()
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	// Read the content of the file
+	body, err := ioutil.ReadAll(file)
 	if err != nil {
 		return RoadFeatures{}, err
 	}
 
-	var roadFeatures RoadFeatures
-	if err := json.Unmarshal(body, &roadFeatures); err != nil {
+	// Parse the JSON data into the RoadFeatures struct
+	var roadFeaturesMap map[string]RoadFeatures
+	if err := json.Unmarshal(body, &roadFeaturesMap); err != nil {
 		return RoadFeatures{}, err
+	}
+
+	// Check if the placeID exists in the data and return the road features
+	roadFeatures, found := roadFeaturesMap[placeID]
+	if !found {
+		return RoadFeatures{}, fmt.Errorf("road features not found for place ID %s", placeID)
 	}
 
 	return roadFeatures, nil

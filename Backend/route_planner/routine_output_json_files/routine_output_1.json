@@ -19,16 +19,18 @@
 
       },
       "road_features": {
-        "temperature_F": 65,
-        "wind_chill_F": 62,
-        "humidity_percent": 55,
-        "pressure_in": 30.0,
-        "visibility_mi": 8,
-        "wind_direction": "NE",
-        "wind_speed_mph": 4,
-        "precipitation_in": 0.0,
-        "weather_condition": "Partly Cloudy",
-        "severity": "5"
+        "Bump": false,
+        "Crossing": true,
+        "Give_Way": false,
+        "Junction": false,
+        "No_Exit": false,
+        "Railway": false,
+        "Roundabout": false,
+        "Station": false,
+        "Stop": false,
+        "Traffic_Calming": false,
+        "Traffic_Signal": true,
+        "Severity": "2.0"
       }
     },
     {
@@ -47,16 +49,18 @@
         "severity": "5"
       },
       "road_features": {
-        "temperature_F": 65,
-        "wind_chill_F": 62,
-        "humidity_percent": 55,
-        "pressure_in": 30.0,
-        "visibility_mi": 8,
-        "wind_direction": "NE",
-        "wind_speed_mph": 4,
-        "precipitation_in": 0.0,
-        "weather_condition": "Partly Cloudy",
-        "severity": "5"
+        "Bump": false,
+        "Crossing": true,
+        "Give_Way": false,
+        "Junction": false,
+        "No_Exit": false,
+        "Railway": false,
+        "Roundabout": false,
+        "Station": false,
+        "Stop": false,
+        "Traffic_Calming": false,
+        "Traffic_Signal": true,
+        "Severity": "2.0"
       }
     },
     {
@@ -75,16 +79,18 @@
         "severity": "5"
       },
       "road_features": {
-        "temperature_F": 65,
-        "wind_chill_F": 62,
-        "humidity_percent": 55,
-        "pressure_in": 30.0,
-        "visibility_mi": 8,
-        "wind_direction": "NE",
-        "wind_speed_mph": 4,
-        "precipitation_in": 0.0,
-        "weather_condition": "Partly Cloudy",
-        "severity": "5"
+        "Bump": false,
+        "Crossing": true,
+        "Give_Way": false,
+        "Junction": false,
+        "No_Exit": false,
+        "Railway": false,
+        "Roundabout": false,
+        "Station": false,
+        "Stop": false,
+        "Traffic_Calming": false,
+        "Traffic_Signal": true,
+        "Severity": "2.0"
       }
     },
     {
@@ -103,16 +109,18 @@
         "severity": "5"
       },
       "road_features": {
-        "temperature_F": 65,
-        "wind_chill_F": 62,
-        "humidity_percent": 55,
-        "pressure_in": 30.0,
-        "visibility_mi": 8,
-        "wind_direction": "NE",
-        "wind_speed_mph": 4,
-        "precipitation_in": 0.0,
-        "weather_condition": "Partly Cloudy",
-        "severity": "5"
+        "Bump": false,
+        "Crossing": true,
+        "Give_Way": false,
+        "Junction": false,
+        "No_Exit": false,
+        "Railway": false,
+        "Roundabout": false,
+        "Station": false,
+        "Stop": false,
+        "Traffic_Calming": false,
+        "Traffic_Signal": true,
+        "Severity": "2.0"
       }
     }
   ],
