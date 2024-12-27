@@ -14,6 +14,8 @@ import RoadFeature from "./components/roadfeature";
 import Timenalysis from "./components/timeAnalysis";
 import Severity_Distribution from "./components/severity_distribution";
 import MapView from "./components/map";
+import AdminRoadFeatureAnalysis from "./components/analyze_road_data";
+import AdminRoadFeatureWeatherAnalysis from "./components/analyze_road_weather_data";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -44,6 +46,10 @@ function App() {
                     element={<HomePage />} />
                 <Route path="/analyzeData"
                     element={<AnalyzeData />} />
+                <Route path="/analyze_road_data"
+                    element={<AdminRoadFeatureAnalysis />} />
+                <Route path="/analyze_road_weather_data"
+                    element={<AdminRoadFeatureWeatherAnalysis />} />
                 <Route path="/total_accident"
                     element={<TotalAccident />} />
                 <Route path="/weather"

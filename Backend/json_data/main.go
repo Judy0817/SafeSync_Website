@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ const (
 )
 
 // RoadFeature represents the structure of a row in the database
-type RoadFeature struct {
+type RoadFeatureWIthSeverity struct {
 	StreetName      string  `json:"street_name"`
 	Bump            bool    `json:"bump"`
 	Crossing        bool    `json:"crossing"`
@@ -35,6 +36,30 @@ type RoadFeature struct {
 	TrafficCalming  bool    `json:"traffic_calming"`
 	TrafficSignal   bool    `json:"traffic_signal"`
 	AverageSeverity float64 `json:"average_severity"`
+}
+
+// Define the RoadFeature struct
+type RoadFeature struct {
+	Bump           bool `json:"bump"`
+	Crossing       bool `json:"crossing"`
+	GiveWay        bool `json:"give_way"`
+	Junction       bool `json:"junction"`
+	NoExit         bool `json:"no_exit"`
+	Railway        bool `json:"railway"`
+	Roundabout     bool `json:"roundabout"`
+	Station        bool `json:"station"`
+	Stop           bool `json:"stop"`
+	TrafficCalming bool `json:"traffic_calming"`
+	TrafficSignal  bool `json:"traffic_signal"`
+}
+
+// Define the WeatherData struct
+type WeatherData struct {
+	Temperature      float64 `json:"temperature"`
+	Pressure         float64 `json:"pressure"`
+	WindDirection    string  `json:"wind_direction"`
+	WindSpeed        float64 `json:"wind_speed"`
+	WeatherCondition string  `json:"weather_condition"`
 }
 
 var db *sql.DB
@@ -66,6 +91,7 @@ func main() {
 	router.GET("/road_features_with_severity", GetRoadFeatures)
 	// Define the new route
 	router.GET("/street_names", GetStreetNames)
+	router.GET("/calculate_severity", CalculateSeverity)
 
 	// Start server
 	router.Run(":8080")
@@ -133,9 +159,9 @@ func GetRoadFeatures(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var features []RoadFeature
+	var features []RoadFeatureWIthSeverity
 	for rows.Next() {
-		var feature RoadFeature
+		var feature RoadFeatureWIthSeverity
 		err := rows.Scan(
 			&feature.StreetName,
 			&feature.Bump,
@@ -175,4 +201,73 @@ func GetRoadFeatures(c *gin.Context) {
 
 	// Respond with JSON for the specific street
 	c.JSON(http.StatusOK, features)
+}
+
+// Define the function to calculate severity based on weather and road data
+func calculateSeverity(weather WeatherData, road RoadFeature) float64 {
+	// For now, return a hardcoded severity of 2.0
+	// You can later add logic to adjust severity based on the input data
+	return 5.0
+}
+
+func CalculateSeverity(c *gin.Context) {
+	// Extract values from query parameters
+	temperature := c.DefaultQuery("temperature", "0")
+	pressure := c.DefaultQuery("pressure", "0")
+	windDirection := c.DefaultQuery("wind_direction", "")
+	windSpeed := c.DefaultQuery("wind_speed", "0")
+	weatherCondition := c.DefaultQuery("weather_condition", "")
+
+	bump := c.DefaultQuery("bump", "false") == "true"
+	crossing := c.DefaultQuery("crossing", "false") == "true"
+	giveWay := c.DefaultQuery("give_way", "false") == "true"
+	junction := c.DefaultQuery("junction", "false") == "true"
+	noExit := c.DefaultQuery("no_exit", "false") == "true"
+	railway := c.DefaultQuery("railway", "false") == "true"
+	roundabout := c.DefaultQuery("roundabout", "false") == "true"
+	station := c.DefaultQuery("station", "false") == "true"
+	stop := c.DefaultQuery("stop", "false") == "true"
+	trafficCalming := c.DefaultQuery("traffic_calming", "false") == "true"
+	trafficSignal := c.DefaultQuery("traffic_signal", "false") == "true"
+
+	// Convert the extracted query parameters into the WeatherData and RoadFeature structs
+	weather := WeatherData{
+		Temperature:      parseFloat(temperature),
+		Pressure:         parseFloat(pressure),
+		WindDirection:    windDirection,
+		WindSpeed:        parseFloat(windSpeed),
+		WeatherCondition: weatherCondition,
+	}
+
+	road := RoadFeature{
+		Bump:           bump,
+		Crossing:       crossing,
+		GiveWay:        giveWay,
+		Junction:       junction,
+		NoExit:         noExit,
+		Railway:        railway,
+		Roundabout:     roundabout,
+		Station:        station,
+		Stop:           stop,
+		TrafficCalming: trafficCalming,
+		TrafficSignal:  trafficSignal,
+	}
+
+	// Calculate the severity
+	severity := calculateSeverity(weather, road)
+
+	// Respond with the calculated severity
+	c.JSON(http.StatusOK, gin.H{
+		"severity": severity,
+	})
+}
+
+// Helper function to parse float values from query parameters
+func parseFloat(value string) float64 {
+	// Convert the string to a float, default to 0 if invalid
+	result, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return 0
+	}
+	return result
 }

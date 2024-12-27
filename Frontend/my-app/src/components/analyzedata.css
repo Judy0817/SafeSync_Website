@@ -1,0 +1,90 @@
+/* Container for the main content */
+.analyze-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    background-color: #f4f7fa;
+    padding: 20px;
+  }
+  
+  /* Main content section */
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1200px;
+    width: 100%;
+    padding: 20px;
+  }
+  
+  /* Styling for each box */
+  .box {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 250px;
+    box-sizing: border-box; /* Ensure padding is included in height */
+  }
+  
+  /* Heading and paragraph styling */
+  .box h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 15px;
+  }
+  
+  .box p {
+    font-size: 16px;
+    color: #666666;
+    margin-bottom: 20px;
+  }
+  
+  /* Styling for the buttons */
+  .button-analyzedata1 {
+    background-color: #4caf50;
+    color: #fff;
+    height: auto;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: auto; /* Ensure the button stays at the bottom of the box */
+  }
+  .button-analyzedata2 {
+    background-color: #4caf50;
+    color: #fff;
+    height: auto;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: auto; /* Ensure the button stays at the bottom of the box */
+  }
+  
+  .button-analyzedata:hover {
+    background-color: #45a049;
+  }
+  
+  /* Media query for smaller screen sizes */
+  @media (max-width: 768px) {
+    .main-content {
+      grid-template-columns: 1fr;
+    }
+  
+    .box {
+      margin: 0 0 20px 0;
+      height: auto; /* Let the height adjust for smaller screens */
+    }
+  }
+  
