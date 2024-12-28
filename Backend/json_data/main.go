@@ -87,20 +87,18 @@ func main() {
 	// Use CORS middleware
 	router.Use(cors.Default())
 
-	// Define routes
-	router.GET("/road_features_with_severity", GetRoadFeatures)
-	// Define the new route
-	router.GET("/street_names", GetStreetNames)
-	router.GET("/calculate_severity", CalculateSeverity)
+	router.GET("/json/road_features_with_severity", GetRoadFeatures)
+	router.GET("/json/street_names", GetStreetNames)
+	router.GET("/json/calculate_severity", CalculateSeverity)
 
-	// Start server
-	router.Run(":8080")
+	fmt.Println("Server is running on port 8081")
+	log.Fatal(http.ListenAndServe(":8081", router))
 }
 
 // GetStreetNames handles requests to fetch only street names from the database
 func GetStreetNames(c *gin.Context) {
 	// Query the database for street names
-	query := "SELECT street_name FROM road_features_with_severity"
+	query := "SELECT street_name FROM road_features_with_severity LIMIT 2"
 	rows, err := db.Query(query)
 	if err != nil {
 		log.Fatal("Error fetching data:", err)
