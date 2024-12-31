@@ -2,9 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-contrib/cors"
@@ -88,17 +91,90 @@ func main() {
 	router.Use(cors.Default())
 
 	router.GET("/json/road_features_with_severity", GetRoadFeatures)
+	router.GET("/json/road_features_with_weather", GetRoadFeaturesAndWeather)
 	router.GET("/json/street_names", GetStreetNames)
 	router.GET("/json/calculate_severity", CalculateSeverity)
+	router.GET("/json/weather_data", func(c *gin.Context) {
+		data, err := getWeatherDataFromAPI(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, data)
+	})
 
-	fmt.Println("Server is running on port 8081")
-	log.Fatal(http.ListenAndServe(":8081", router))
+	fmt.Println("Server is running on port 8085")
+	log.Fatal(http.ListenAndServe(":8085", router))
+}
+
+func formatToTwoDecimalPlaces(value float64) string {
+	return fmt.Sprintf("%.2f", value)
+}
+
+func kelvinToFahrenheit(kelvin float64) float64 {
+	return (kelvin-273.15)*9/5 + 32
+}
+
+func celsiusToFahrenheit(celsius float64) float64 {
+	return (celsius * 9 / 5) + 32
+}
+
+func hpaToInHg(hpa float64) float64 {
+	return hpa / 33.8639
+}
+
+func metersToMiles(meters float64) float64 {
+	return meters / 1609.344
+}
+
+func mpsToMph(mps float64) float64 {
+	return mps * 2.23694
+}
+
+func getWindDirection(deg float64) string {
+	// Mapping degree ranges to cardinal directions
+	if deg >= 0 && deg < 22.5 {
+		return "North"
+	} else if deg >= 22.5 && deg < 45 {
+		return "NNE"
+	} else if deg >= 45 && deg < 67.5 {
+		return "NE"
+	} else if deg >= 67.5 && deg < 90 {
+		return "ENE"
+	} else if deg >= 90 && deg < 112.5 {
+		return "East"
+	} else if deg >= 112.5 && deg < 135 {
+		return "ESE"
+	} else if deg >= 135 && deg < 157.5 {
+		return "SE"
+	} else if deg >= 157.5 && deg < 180 {
+		return "SSE"
+	} else if deg >= 180 && deg < 202.5 {
+		return "South"
+	} else if deg >= 202.5 && deg < 225 {
+		return "SSW"
+	} else if deg >= 225 && deg < 247.5 {
+		return "SW"
+	} else if deg >= 247.5 && deg < 270 {
+		return "WSW"
+	} else if deg >= 270 && deg < 292.5 {
+		return "West"
+	} else if deg >= 292.5 && deg < 315 {
+		return "WNW"
+	} else if deg >= 315 && deg < 337.5 {
+		return "NW"
+	} else if deg >= 337.5 && deg < 360 {
+		return "North"
+	} else {
+		// Handle cases where wind direction is calm or variable
+		return "Calm"
+	}
 }
 
 // GetStreetNames handles requests to fetch only street names from the database
 func GetStreetNames(c *gin.Context) {
 	// Query the database for street names
-	query := "SELECT street_name FROM road_features_with_severity LIMIT 2"
+	query := "SELECT street_name FROM road_features_with_severity"
 	rows, err := db.Query(query)
 	if err != nil {
 		log.Fatal("Error fetching data:", err)
@@ -137,7 +213,6 @@ func GetStreetNames(c *gin.Context) {
 	c.JSON(http.StatusOK, streetNames)
 }
 
-// GetRoadFeatures handles requests to fetch road features for a specific street name
 func GetRoadFeatures(c *gin.Context) {
 	// Get the street name from query parameters
 	streetName := c.DefaultQuery("street_name", "") // Default to empty if no street_name is provided
@@ -199,6 +274,194 @@ func GetRoadFeatures(c *gin.Context) {
 
 	// Respond with JSON for the specific street
 	c.JSON(http.StatusOK, features)
+}
+
+func GetRoadFeaturesAndWeather(c *gin.Context) {
+	// Get the street name from query parameters
+	streetName := c.DefaultQuery("street_name", "") // Default to empty if no street_name is provided
+
+	if streetName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Street name is required"})
+		return
+	}
+
+	// Query the database for the specific street name
+	query := "SELECT * FROM road_features_with_severity WHERE street_name = $1"
+	rows, err := db.Query(query, streetName)
+	if err != nil {
+		log.Fatal("Error fetching data:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
+		return
+	}
+	defer rows.Close()
+
+	var features []RoadFeatureWIthSeverity
+	for rows.Next() {
+		var feature RoadFeatureWIthSeverity
+		err := rows.Scan(
+			&feature.StreetName,
+			&feature.Bump,
+			&feature.Crossing,
+			&feature.GiveWay,
+			&feature.Junction,
+			&feature.NoExit,
+			&feature.Railway,
+			&feature.Roundabout,
+			&feature.Station,
+			&feature.Stop,
+			&feature.TrafficCalming,
+			&feature.TrafficSignal,
+			&feature.AverageSeverity,
+		)
+		if err != nil {
+			log.Fatal("Error scanning data:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process data"})
+			return
+		}
+		features = append(features, feature)
+	}
+
+	// Handle any errors encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		log.Fatal("Error during rows iteration:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing data"})
+		return
+	}
+
+	// If no data is found for the provided street name
+	if len(features) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No road features found for the specified street"})
+		return
+	}
+
+	// Get the weather data (either call GetWeatherData or replicate its logic here)
+	weatherDataFormatted, err := getWeatherDataFromAPI(c) // Pass the context to the API function
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch weather data"})
+		return
+	}
+
+	// Format the road features in the required structure
+	roadFeaturesFormatted := gin.H{
+		"speed_bumps": features[0].Bump,
+		"crossings":   features[0].Crossing,
+		"give_way":    features[0].GiveWay,
+		"junction":    features[0].Junction,
+		"no_exit":     features[0].NoExit,
+		"railway":     features[0].Railway,
+		"roundabout":  features[0].Roundabout,
+		"station":     features[0].Station,
+		"stop":        features[0].Stop,
+	}
+
+	// Define the data structure for the final output
+	finalModelInput := gin.H{
+		"weather": gin.H{
+			"weather":           weatherDataFormatted["weather"],
+			"temperature(F)":    weatherDataFormatted["temperature(F)"],
+			"humidity(%)":       weatherDataFormatted["humidity(%)"],
+			"wind_chill(F)":     weatherDataFormatted["wind_chill(F)"],
+			"pressure(in)":      weatherDataFormatted["pressure(in)"],
+			"visibility(mi)":    weatherDataFormatted["visibility(mi)"],
+			"wind_direction":    weatherDataFormatted["wind_direction"],
+			"wind_speed(mph)":   weatherDataFormatted["wind_speed(mph)"],
+			"precipitation(in)": weatherDataFormatted["precipitation(in)"],
+			"severity":          features[0].AverageSeverity,
+		},
+		"road_features": roadFeaturesFormatted,
+	}
+
+	// Save the data to a JSON file
+	file, err := os.Create("model_input.json")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create JSON file"})
+		return
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(finalModelInput); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write data to JSON file"})
+		return
+	}
+
+	// Respond with the formatted data
+	c.JSON(http.StatusOK, finalModelInput)
+}
+
+// This function fetches weather data from the OpenWeatherMap API
+func getWeatherDataFromAPI(c *gin.Context) (gin.H, error) {
+	latitude := c.DefaultQuery("latitude", "")
+	longitude := c.DefaultQuery("longitude", "")
+	if latitude == "" || longitude == "" {
+		return nil, fmt.Errorf("latitude and longitude parameters are required")
+	}
+	apiKey := "2601fcbe1411562dc72d4050e299d2c7" // Replace with your actual API key
+	apiURL := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s", latitude, longitude, apiKey)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get weather data: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var weatherData map[string]interface{}
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	if err := json.Unmarshal(body, &weatherData); err != nil {
+		return nil, fmt.Errorf("Failed to parse weather data: %v", err)
+	}
+
+	// Parse relevant data (same as in your GetWeatherData function)
+	weather := weatherData["weather"].([]interface{})[0].(map[string]interface{})["description"]
+	main := weatherData["main"].(map[string]interface{})
+	temperature := main["temp"].(float64)
+	humidity := main["humidity"].(float64)
+	pressure := main["pressure"].(float64)
+
+	var visibility float64
+	if vis, ok := weatherData["visibility"].(float64); ok {
+		visibility = vis
+	} else {
+		visibility = 0.0
+	}
+
+	wind := weatherData["wind"].(map[string]interface{})
+	windSpeed := wind["speed"].(float64)
+	windDirection := wind["deg"].(float64)
+
+	rain := weatherData["rain"]
+	precipitation := 0.0
+	if rain != nil {
+		if rainData, ok := rain.(map[string]interface{}); ok {
+			if p, ok := rainData["1h"].(float64); ok {
+				precipitation = p
+			}
+		}
+	}
+
+	// Convert values to appropriate units
+	temperatureFahrenheit := kelvinToFahrenheit(temperature)
+	windChillCelsius := 13.12 + 0.6215*(temperature-273.15) - 11.37*(windSpeed*3.6)*0.16 + 0.3965*(temperature-273.15)*(windSpeed*3.6)*0.16
+	windChillFahrenheit := celsiusToFahrenheit(windChillCelsius)
+	pressureInHg := hpaToInHg(pressure)
+	visibilityMiles := metersToMiles(visibility)
+	windSpeedMph := mpsToMph(windSpeed)
+
+	weatherDataFormatted := gin.H{
+		"weather":           weather,
+		"temperature(F)":    formatToTwoDecimalPlaces(temperatureFahrenheit),
+		"humidity(%)":       formatToTwoDecimalPlaces(humidity),
+		"wind_chill(F)":     formatToTwoDecimalPlaces(windChillFahrenheit),
+		"pressure(in)":      formatToTwoDecimalPlaces(pressureInHg),
+		"visibility(mi)":    formatToTwoDecimalPlaces(visibilityMiles),
+		"wind_direction":    getWindDirection(windDirection),
+		"wind_speed(mph)":   formatToTwoDecimalPlaces(windSpeedMph),
+		"precipitation(in)": formatToTwoDecimalPlaces(precipitation),
+	}
+
+	return weatherDataFormatted, nil
 }
 
 // Define the function to calculate severity based on weather and road data
@@ -269,3 +532,36 @@ func parseFloat(value string) float64 {
 	}
 	return result
 }
+
+// func getWeatherDataFromModelOutput(c *gin.Context) {
+// 	// Open the weather data JSON file
+// 	file, err := os.Open("model_output.json") // Ensure the file is in the same directory
+// 	if err != nil {
+// 		log.Println("Error opening weather data file:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open weather data file"})
+// 		return
+// 	}
+// 	defer file.Close()
+
+// 	// Decode the weather data from the file
+// 	var weatherData ModelOutputWeatherData
+// 	if err := json.NewDecoder(file).Decode(&weatherData); err != nil {
+// 		log.Println("Error decoding weather data:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not decode weather data"})
+// 		return
+// 	}
+
+// 	// Respond with the fetched weather data
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"humidity":      weatherData.Humidity,
+// 		"precipitation": weatherData.Precipitation,
+// 		"pressure":      weatherData.Pressure,
+// 		"temperature":   weatherData.Temperature,
+// 		"visibility":    weatherData.Visibility,
+// 		"weather":       weatherData.Weather,
+// 		"windChill":     weatherData.WindChill,
+// 		"windDirection": weatherData.WindDirection,
+// 		"windSpeed":     weatherData.WindSpeed,
+// 		"severity":      weatherData.Severity,
+// 	})
+// }

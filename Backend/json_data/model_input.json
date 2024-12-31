@@ -1,0 +1,25 @@
+{
+  "road_features": {
+    "crossings": true,
+    "give_way": false,
+    "junction": false,
+    "no_exit": false,
+    "railway": false,
+    "roundabout": false,
+    "speed_bumps": false,
+    "station": false,
+    "stop": false
+  },
+  "weather": {
+    "humidity(%)": "82.00",
+    "precipitation(in)": "0.00",
+    "pressure(in)": "29.74",
+    "severity": 2.3257575757575757,
+    "temperature(F)": "41.92",
+    "visibility(mi)": "6.21",
+    "weather": "overcast clouds",
+    "wind_chill(F)": "40.45",
+    "wind_direction": "East",
+    "wind_speed(mph)": "5.01"
+  }
+}

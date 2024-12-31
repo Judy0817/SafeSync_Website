@@ -69,7 +69,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
       traffic_signal: streetData.Traffic_Signal ? 'true' : 'false',
     });
 
-    fetch(`http://localhost:8080/calculate_severity?${queryParams}`)
+    fetch(`http://localhost:8080/json/calculate_severity?${queryParams}`)
       .then((response) => response.json())
       .then((data) => {
         setAccidentRisk(data.severity); // Assuming the response contains a 'severity' field

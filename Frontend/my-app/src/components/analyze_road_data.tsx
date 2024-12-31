@@ -34,7 +34,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
 
   // Fetch all street names
   useEffect(() => {
-    fetch('http://localhost:8080/street_names')
+    fetch('http://localhost:8080/json/street_names')
       .then((response) => response.json())
       .then((data) => {
         console.log('Fetched street names:', data); // Check the fetched street names
@@ -45,7 +45,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
 
   // Fetch road features with severity data
   useEffect(() => {
-    fetch(`http://localhost:8080/road_features_with_severity?street_name=${encodeURIComponent(selectedStreet)}`)
+    fetch(`http://localhost:8080/json/road_features_with_severity?street_name=${encodeURIComponent(selectedStreet)}`)
       .then((response) => response.json())
       .then((data) => {
         console.log('Fetched road data:', data); // Check the fetched data

@@ -1,4 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+interface RoadFeatures {
+  crossings: boolean;
+  give_way: boolean;
+  junction: boolean;
+  no_exit: boolean;
+  railway: boolean;
+  roundabout: boolean;
+  speed_bumps: boolean;
+  station: boolean;
+  stop: boolean;
+  traffic_calming: boolean;
+  traffic_signal: boolean;
+}
 
 interface WeatherDataModel {
   condition: string;
@@ -10,27 +24,43 @@ interface WeatherDataModel {
   windDirection: string;
   windSpeed: number;
   precipitation: number;
-  severity: number;  // Added severity field
-}
-
-interface WeatherData {
-  condition: string;
-  temperature: number;
-  humidity: number;
-  windChill: number;
-  pressure: number;
-  visibility: number;
-  windDirection: string;
-  windSpeed: number;
-  precipitation: number;
+  severity: number;
+  roadFeatures: RoadFeatures;
 }
 
 const AlertSystem = () => {
-  const [streetName, setStreetName] = useState(''); // Street name entered by the user
-  const [weatherDataModel, setWeatherDataModel] = useState<WeatherDataModel | null>(null); // Weather data for the selected street
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null); // Weather data for the selected street
-  const [errorMessage, setErrorMessage] = useState(''); // Error message
+  const [streetName, setStreetName] = useState('');
+  const [weatherDataModel, setWeatherDataModel] = useState<WeatherDataModel | null>(null);
+  const [predictedSeverity, setPredictedSeverity] = useState<number | null>(null); // New state for predicted severity
+  const [errorMessage, setErrorMessage] = useState('');
+  const [streetNames, setStreetNames] = useState<string[]>([]);
+  const [filteredStreetNames, setFilteredStreetNames] = useState<string[]>([]);
 
+  useEffect(() => {
+    const fetchStreetNames = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/json/street_names');
+        const data = await response.json();
+        setStreetNames(data);
+      } catch (error) {
+        console.error('Error fetching street names:', error);
+        setErrorMessage('Error fetching street names.');
+      }
+    };
+
+    fetchStreetNames();
+  }, []);
+
+  useEffect(() => {
+    if (streetName.trim() === '') {
+      setFilteredStreetNames([]);
+    } else {
+      const filtered = streetNames.filter((street) =>
+        street.toLowerCase().includes(streetName.toLowerCase())
+      );
+      setFilteredStreetNames(filtered);
+    }
+  }, [streetName, streetNames]);
 
   const fetchGeolocation = async (streetName: string) => {
     try {
@@ -38,8 +68,7 @@ const AlertSystem = () => {
       const data = await response.json();
       
       if (data.latitude && data.longitude) {
-        // If latitude and longitude are returned, fetch the weather data
-        fetchWeatherData(data.latitude, data.longitude);
+        fetchWeatherData(streetName, data.latitude, data.longitude);
       } else {
         setErrorMessage('No geolocation data found for this street.');
       }
@@ -49,62 +78,70 @@ const AlertSystem = () => {
     }
   };
 
-  const fetchWeatherData = async (latitude: number, longitude: number) => {
+  const fetchWeatherData = async (streetName: string, latitude: number, longitude: number) => {
     try {
-      const response = await fetch(`http://localhost:8080/weather/weather_data?latitude=${latitude}&longitude=${longitude}`);
+      const response = await fetch(`http://localhost:8080/json/road_features_with_weather?street_name=${streetName}&latitude=${latitude}&longitude=${longitude}`);
       const data = await response.json();
-      console.log('Fetched weather data:', data);  // Log the raw data
+      console.log('Fetched weather data:', data);
 
-      // Ensure that the data fields are properly parsed and converted to numbers where needed
-      setWeatherData({
-        condition: data.weather || 'N/A', // Ensure fallback if data.weather is undefined
-        temperature: parseFloat(data["temperature(F)"]) || 0, // Ensure parsing the value as number
-        humidity: parseFloat(data["humidity(%)"]) || 0, // Ensure parsing as number
-        windChill: parseFloat(data["wind_chill(F)"]) || 0, // Ensure parsing as number
-        pressure: parseFloat(data["pressure(in)"]) || 0, // Ensure parsing as number
-        visibility: parseFloat(data["visibility(mi)"]) || 0, // Ensure parsing as number
-        windDirection: data.wind_direction || 'N/A', // Ensure fallback if wind_direction is missing
-        windSpeed: parseFloat(data["wind_speed(mph)"]) || 0, // Ensure parsing as number
-        precipitation: parseFloat(data["precipitation(in)"]) || 0, // Ensure parsing as number
-      });
+      const weather = data.weather;
+      const roadFeatures = data.road_features;
 
-      setErrorMessage(''); // Reset any previous error message
-    } catch (error) {
-      console.error('Error fetching weather data:', error);
-      setErrorMessage('Error fetching weather data.');
-    }
-  };
-
-  // Function to fetch weather data from the backend (static JSON file)
-  const fetchWeatherDataFromModel = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/weather/model_output`);
-      const data = await response.json();
-      console.log('Fetched weather data:', data);  // Log the raw data
-
-      // Ensure that the data fields are properly parsed and converted to numbers where needed
       setWeatherDataModel({
-        condition: data.weather || 'N/A', // Ensure fallback if data.weather is undefined
-        temperature: parseFloat(data["temperature"]) || 0, // Ensure parsing the value as number
-        humidity: parseFloat(data["humidity"]) || 0, // Ensure parsing as number
-        windChill: parseFloat(data["windChill"]) || 0, // Ensure parsing as number
-        pressure: parseFloat(data["pressure"]) || 0, // Ensure parsing as number
-        visibility: parseFloat(data["visibility"]) || 0, // Ensure parsing as number
-        windDirection: data.windDirection || 'N/A', // Ensure fallback if wind_direction is missing
-        windSpeed: parseFloat(data["windSpeed"]) || 0, // Ensure parsing as number
-        precipitation: parseFloat(data["precipitation"]) || 0, // Ensure parsing as number
-        severity: parseFloat(data["severity"]) || 0, // Ensure parsing severity as number
+        condition: weather.weather || 'N/A',
+        temperature: parseFloat(weather["temperature(F)"]) || 0,
+        humidity: parseFloat(weather["humidity(%)"]) || 0,
+        windChill: parseFloat(weather["wind_chill(F)"]) || 0,
+        pressure: parseFloat(weather["pressure(in)"]) || 0,
+        visibility: parseFloat(weather["visibility(mi)"]) || 0,
+        windDirection: weather.wind_direction || 'N/A',
+        windSpeed: parseFloat(weather["wind_speed(mph)"]) || 0,
+        precipitation: parseFloat(weather["precipitation(in)"]) || 0,
+        severity: weather.severity || 0,
+        roadFeatures: roadFeatures,
       });
 
-      setErrorMessage(''); // Reset any previous error message
+      setErrorMessage('');
+      fetchPredictedSeverity(weather, roadFeatures);  // Fetch predicted severity based on weather and road features
     } catch (error) {
       console.error('Error fetching weather data:', error);
       setErrorMessage('Error fetching weather data.');
     }
   };
-  
 
-  // Handle the search form submit
+  const fetchPredictedSeverity = async (weather: any, roadFeatures: RoadFeatures) => {
+    try {
+      const params = new URLSearchParams({
+        temperature: weather["temperature(F)"].toString(),
+        pressure: weather["pressure(in)"].toString(),
+        wind_direction: weather.wind_direction,
+        wind_speed: weather["wind_speed(mph)"].toString(),
+        weather_condition: weather.weather,
+        bumplse: roadFeatures.speed_bumps ? 'true' : 'false',
+        junction: roadFeatures.junction ? 'true' : 'false',
+        no_exit: roadFeatures.no_exit ? 'true' : 'false',
+        railway: roadFeatures.railway ? 'true' : 'false',
+        roundabout: roadFeatures.roundabout ? 'true' : 'false',
+        station: roadFeatures.station ? 'true' : 'false',
+        stop: roadFeatures.stop ? 'true' : 'false',
+        traffic_calming: roadFeatures.speed_bumps ? 'true' : 'false', // Assuming 'traffic_calming' is based on speed bumps
+        traffic_signal: 'false', // You can update this based on actual data
+      });
+
+      const response = await fetch(`http://localhost:8080/json/calculate_severity?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.severity) {
+        setPredictedSeverity(data.severity);  // Store the predicted severity in state
+      } else {
+        setPredictedSeverity(null); // No severity returned
+      }
+    } catch (error) {
+      console.error('Error fetching predicted severity:', error);
+      setErrorMessage('Error fetching predicted severity.');
+    }
+  };
+
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (streetName.trim() === '') {
@@ -112,20 +149,12 @@ const AlertSystem = () => {
       return;
     }
     fetchGeolocation(streetName);
-    fetchWeatherDataFromModel(); // Fetch the weather data based on the static JSON file
-  };
-
-  // Function to determine the severity color
-  const getSeverityColor = (severity: number | null) => {
-    if (severity === null) return 'black'; // Default color if severity is not available
-    return severity >= 4.0 ? 'red' : 'green'; // Severity threshold for red (warning) or green (safe)
   };
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Street Weather Information</h2>
+      <h2>Street Weather and Road Features Information</h2>
 
-      {/* Search Form */}
       <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
         <input
           type="text"
@@ -139,36 +168,69 @@ const AlertSystem = () => {
         </button>
       </form>
 
-      {/* Error Message */}
+      {filteredStreetNames.length > 0 && (
+        <ul style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '5px' }}>
+          {filteredStreetNames.map((street, index) => (
+            <li
+              key={index}
+              onClick={() => {
+                setStreetName(street);
+                setFilteredStreetNames([]);
+                fetchGeolocation(street);
+              }}
+              style={{ cursor: 'pointer', padding: '5px', backgroundColor: '#f9f9f9', margin: '5px 0' }}
+            >
+              {street}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
-      {/* Display Weather Data */}
-      {weatherData ? (
+      {weatherDataModel ? (
         <div style={{ marginTop: '20px' }}>
-          <h3>Weather for {streetName}</h3>
-          {weatherDataModel && (
-            <ul>
-              <li>Weather Condition: {weatherDataModel.condition}</li>
-              <li>Temperature: {weatherDataModel.temperature.toFixed(2)} °F</li>
-              <li>Humidity: {weatherData.humidity}%</li>
-              <li>Wind Chill: {weatherData.windChill.toFixed(2)} °F</li>
-              <li>Pressure: {weatherData.pressure} in</li>
-              <li>Visibility: {weatherData.visibility} mi</li>
-              <li>Wind Direction: {weatherData.windDirection}</li>
-              <li>Wind Speed: {weatherData.windSpeed} mph</li>
-              <li>Precipitation: {weatherData.precipitation} in</li>
-            </ul>
-          )}
+          <h3>Weather and Road Features for {streetName}</h3>
+          <ul>
+            <li>Weather Condition: {weatherDataModel.condition}</li>
+            <li>Temperature: {weatherDataModel.temperature.toFixed(2)} °F</li>
+            <li>Humidity: {weatherDataModel.humidity}%</li>
+            <li>Wind Chill: {weatherDataModel.windChill.toFixed(2)} °F</li>
+            <li>Pressure: {weatherDataModel.pressure} in</li>
+            <li>Visibility: {weatherDataModel.visibility} mi</li>
+            <li>Wind Direction: {weatherDataModel.windDirection}</li>
+            <li>Wind Speed: {weatherDataModel.windSpeed} mph</li>
+            <li>Precipitation: {weatherDataModel.precipitation} in</li>
+            <li>Severity: {weatherDataModel.severity.toFixed(2)}</li>
+          </ul>
 
-          {/* Display Severity */}
-          {weatherDataModel && weatherDataModel.severity !== null && (
-            <div style={{ color: getSeverityColor(weatherDataModel.severity) }}>
-              <h4>Predicted Severity: {weatherDataModel.severity.toFixed(2)}</h4>
+          <h4>Road Features:</h4>
+          <ul>
+            <li>Crossings: {weatherDataModel.roadFeatures.crossings ? 'Yes' : 'No'}</li>
+            <li>Give Way: {weatherDataModel.roadFeatures.give_way ? 'Yes' : 'No'}</li>
+            <li>Junction: {weatherDataModel.roadFeatures.junction ? 'Yes' : 'No'}</li>
+            <li>No Exit: {weatherDataModel.roadFeatures.no_exit ? 'Yes' : 'No'}</li>
+            <li>Railway: {weatherDataModel.roadFeatures.railway ? 'Yes' : 'No'}</li>
+            <li>Roundabout: {weatherDataModel.roadFeatures.roundabout ? 'Yes' : 'No'}</li>
+            <li>Speed Bumps: {weatherDataModel.roadFeatures.speed_bumps ? 'Yes' : 'No'}</li>
+            <li>Station: {weatherDataModel.roadFeatures.station ? 'Yes' : 'No'}</li>
+            <li>Stop: {weatherDataModel.roadFeatures.stop ? 'Yes' : 'No'}</li>
+          </ul>
+
+          {/* Display Predicted Severity */}
+          {predictedSeverity !== null ? (
+            <div style={{ marginTop: '20px' }}>
+              <h4>Predicted Severity: {predictedSeverity}</h4>
+              <p style={{ color: predictedSeverity >= 4 ? 'red' : 'green' }}>
+                {predictedSeverity >= 4 ? 'High severity risk' : 'Low severity risk'}
+              </p>
             </div>
+          ) : (
+            <p>Loading predicted severity...</p>
           )}
         </div>
       ) : (
-        <p></p>
+        <p>No data available.</p>
       )}
     </div>
   );

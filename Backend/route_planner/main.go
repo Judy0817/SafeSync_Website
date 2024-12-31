@@ -214,8 +214,8 @@ func main() {
 	http.HandleFunc("/weather/route", GetRouteData)
 
 	// Start the server
-	log.Println("Server started at http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Println("Server started at http://localhost:8086")
+	if err := http.ListenAndServe(":8086", nil); err != nil {
 		log.Fatal("Error starting server:", err)
 	}
 }
