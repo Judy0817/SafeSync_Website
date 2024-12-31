@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-contrib/cors"
@@ -370,21 +369,6 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 			"severity":          features[0].AverageSeverity,
 		},
 		"road_features": roadFeaturesFormatted,
-	}
-
-	// Save the data to a JSON file
-	file, err := os.Create("model_input.json")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create JSON file"})
-		return
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(finalModelInput); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write data to JSON file"})
-		return
 	}
 
 	// Respond with the formatted data

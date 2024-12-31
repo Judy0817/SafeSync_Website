@@ -95,12 +95,8 @@ func main() {
 	router.GET("/weather/weather_conditions_count", WeatherConditionsCount)
 	router.GET("/weather/average_weather_severity", AverageWeatherConditions)
 	router.GET("/weather/average_wind_speed", AverageWindSpeeds)
-
 	router.GET("/weather/geolocation", GetGeoLocation) // For geolocation of street
-	// router.GET("/weather/weather_data", GetWeatherData) // To get weather data by geolocation
-
 	router.GET("/database", getDatabaseName)
-	//router.GET("/weather/model_output", getWeatherDataFromModelOutput) // Add this line to use the function
 
 	fmt.Println("Server is running on port 8084")
 	log.Fatal(http.ListenAndServe(":8084", router))
