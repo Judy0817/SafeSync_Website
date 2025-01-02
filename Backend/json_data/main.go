@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-contrib/cors"
@@ -64,6 +65,11 @@ type WeatherData struct {
 	WeatherCondition string  `json:"weather_condition"`
 }
 
+type StreetData struct {
+	RoadFeatures RoadFeature `json:"road_features"`
+	Weather      WeatherData `json:"weather"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -101,6 +107,8 @@ func main() {
 		}
 		c.JSON(http.StatusOK, data)
 	})
+	router.GET("/weather/geolocation", GetGeoLocation)
+	router.GET("json/getStartingDestinationData", getStartingDestinationDataHandler)
 
 	fmt.Println("Server is running on port 8085")
 	log.Fatal(http.ListenAndServe(":8085", router))
@@ -382,7 +390,7 @@ func getWeatherDataFromAPI(c *gin.Context) (gin.H, error) {
 	if latitude == "" || longitude == "" {
 		return nil, fmt.Errorf("latitude and longitude parameters are required")
 	}
-	apiKey := "2601fcbe1411562dc72d4050e299d2c7" // Replace with your actual API key
+	apiKey := "2601fcbe1411562dc72d4050e299d2c7"
 	apiURL := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s", latitude, longitude, apiKey)
 	resp, err := http.Get(apiURL)
 	if err != nil {
@@ -517,35 +525,132 @@ func parseFloat(value string) float64 {
 	return result
 }
 
-// func getWeatherDataFromModelOutput(c *gin.Context) {
-// 	// Open the weather data JSON file
-// 	file, err := os.Open("model_output.json") // Ensure the file is in the same directory
-// 	if err != nil {
-// 		log.Println("Error opening weather data file:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open weather data file"})
-// 		return
-// 	}
-// 	defer file.Close()
+func GetGeoLocation(c *gin.Context) {
+	streetName := c.DefaultQuery("street_name", "")
+	if streetName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "street_name parameter is required"})
+		return
+	}
 
-// 	// Decode the weather data from the file
-// 	var weatherData ModelOutputWeatherData
-// 	if err := json.NewDecoder(file).Decode(&weatherData); err != nil {
-// 		log.Println("Error decoding weather data:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not decode weather data"})
-// 		return
-// 	}
+	// Encode the street name to handle special characters properly
+	encodedStreetName := url.QueryEscape(streetName)
 
-// 	// Respond with the fetched weather data
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"humidity":      weatherData.Humidity,
-// 		"precipitation": weatherData.Precipitation,
-// 		"pressure":      weatherData.Pressure,
-// 		"temperature":   weatherData.Temperature,
-// 		"visibility":    weatherData.Visibility,
-// 		"weather":       weatherData.Weather,
-// 		"windChill":     weatherData.WindChill,
-// 		"windDirection": weatherData.WindDirection,
-// 		"windSpeed":     weatherData.WindSpeed,
-// 		"severity":      weatherData.Severity,
-// 	})
-// }
+	// Using Nominatim API for geolocation (OpenStreetMap)
+	apiURL := fmt.Sprintf("https://nominatim.openstreetmap.org/search?q=%s&format=json", encodedStreetName)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get geolocation"})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var geoResults []map[string]interface{}
+	if err := json.Unmarshal(body, &geoResults); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse geolocation response"})
+		return
+	}
+
+	// If no results, return error
+	if len(geoResults) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Street not found"})
+		return
+	}
+
+	// Get the first result, assuming it's the most relevant one
+	lat := geoResults[0]["lat"]
+	lon := geoResults[0]["lon"]
+
+	// Convert lat and lon to float64
+	latitude, _ := lat.(string)
+	longitude, _ := lon.(string)
+
+	c.JSON(http.StatusOK, gin.H{
+		"latitude":  latitude,
+		"longitude": longitude,
+	})
+}
+
+// Function to fetch weather and road data for each street
+func generateRouteData(starting, destination string) (map[string]StreetData, error) {
+	locations := map[string][2]float64{
+		"BRICE%20RD": {39.929226798104274, -82.83102723124017},
+		"MAIN%20ST":  {39.930000, -82.830000},
+		"PARK%20AVE": {39.931000, -82.832000},
+		"OAK%20DR":   {39.932000, -82.833000},
+	}
+
+	// Prepare a map to store the results
+	result := make(map[string]StreetData)
+
+	// Iterate over the hardcoded street locations
+	for streetName, coords := range locations {
+		// Construct the URL with the correct street name and coordinates
+		url := fmt.Sprintf("http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
+			streetName, coords[0], coords[1])
+
+		// Log the URL for debugging
+		log.Printf("Sending GET request to: %s\n", url)
+
+		// Send the GET request
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Printf("Error fetching data for %s: %v\n", streetName, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		// Check the response status code
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Non-OK status for %s: %d\n", streetName, resp.StatusCode)
+			continue
+		}
+
+		// Read and log the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Error reading response body for %s: %v\n", streetName, err)
+			continue
+		}
+
+		// Log the raw response body for debugging
+		log.Printf("Response body for %s: %s\n", streetName, string(body))
+
+		// Parse the JSON response
+		var streetData StreetData
+		err = json.Unmarshal(body, &streetData)
+		if err != nil {
+			log.Printf("Error unmarshaling data for %s: %v\n", streetName, err)
+			continue
+		}
+
+		// Store the result for this street
+		result[streetName] = streetData
+	}
+
+	return result, nil
+}
+
+// HTTP handler to trigger generateRouteData and return the result as JSON
+func getStartingDestinationDataHandler(c *gin.Context) {
+	// Extract the query parameters
+	starting := c.DefaultQuery("starting", "")
+	destination := c.DefaultQuery("destination", "")
+
+	// Validate that both parameters are provided
+	if starting == "" || destination == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' query parameters are required"})
+		return
+	}
+
+	// Call the generateRouteData function to get the data
+	data, err := generateRouteData(starting, destination)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error generating route data: %v", err)})
+		return
+	}
+
+	// Return the data as JSON
+	c.JSON(http.StatusOK, data)
+}
