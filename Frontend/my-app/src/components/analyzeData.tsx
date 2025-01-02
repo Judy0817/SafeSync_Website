@@ -25,7 +25,7 @@ const AnalyzeData: React.FC = () => {
             road features and accident severity.
           </p>
           <button onClick={goToAnalyzeRoadData} className="button-analyzedata1">
-            Analyze Data
+            Analyze Road Data
           </button>
         </div>
 
@@ -34,10 +34,10 @@ const AnalyzeData: React.FC = () => {
           <p>
             Dive deeper into accident prediction by analyzing both road features and weather data.
             Weather conditions such as temperature, humidity, and visibility play a crucial role in
-            accident severity. Combine both data sets to gain a comprehensive understanding.
+            accident severity.
           </p>
           <button onClick={goToAnalyzeWeatherData} className="button-analyzedata2">
-            Analyze Data
+            Analyze Road + Weather Data
           </button>
         </div>
       </main>

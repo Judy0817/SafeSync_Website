@@ -170,17 +170,9 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
   const featureValues = featureLabels.map((feature) => (selectedStreetData[feature] ? 1 : 0));
 
   return (
-<Box sx={{
-    display: 'flex',
-    flexDirection: { xs: 'column', md: 'row' },
-    gap: 0,
-    p: 0,
-    alignItems: 'center', // Align items to center
-    justifyContent: 'center', // Center content horizontally
-    height: '100vh', // Full viewport height for vertical centering
-  }}>
+<Box sx={{ p: 2, display: 'flex', flexDirection: 'row', gap: 2 }}>
   {/* Left Section */}
-  <Box sx={{ flex: 1, maxWidth: { md: '500px' }, ml: 30 }}>
+  <Box sx={{ flex: 1 }}>
     <Typography variant="h5" gutterBottom>
       Road Feature Analysis
     </Typography>
@@ -228,23 +220,9 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
         </Grid>
       </FormGroup>
 
-      <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-        Average Severity: {selectedStreetData.average_severity}
+      <Typography variant="subtitle1" gutterBottom sx={{ mt: 1, fontWeight: 'bold',color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',}}>
+        Current Severity: {selectedStreetData.average_severity}
       </Typography>
-      <Button variant="contained" color="primary" sx={{ padding: '10px 20px' }} startIcon={<TrafficOutlined />} onClick={handlePredictSeverity}>
-        Predict Severity
-      </Button>
-      <Typography
-        variant="subtitle1"
-        gutterBottom
-        sx={{
-          mt: 1,
-          fontWeight: 'bold',
-          color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',
-        }}
-      >
-  Predicted Severity: {accidentRisk !== null ? accidentRisk : 'Not calculated yet'}
-</Typography>
 
     </Paper>
   </Box>
@@ -282,15 +260,30 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
         height={200}
       />
     </Box>
+    <Typography
+        variant="subtitle1"
+        gutterBottom
+        sx={{
+          mt: 1,
+          fontWeight: 'bold',
+          color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',
+        }}
+      >
+  Predicted Severity: {accidentRisk !== null ? accidentRisk : 'N/A'}
+</Typography>
+    <Button variant="contained" color="primary" sx={{ padding: '10px 20px' }} startIcon={<TrafficOutlined />} onClick={handlePredictSeverity}>
+        Predicted Severity
+    </Button>
 
-    <Button
+
+    {/* <Button
       variant="contained"
       color="primary"
       sx={{ mt: 2, ml: 20  }}
       startIcon={<TrafficOutlined />}
     >
       Simulate Traffic Changes
-    </Button>
+    </Button> */}
   </Box>
 </Box>
 

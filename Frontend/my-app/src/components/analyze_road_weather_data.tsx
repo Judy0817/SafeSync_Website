@@ -1,52 +1,41 @@
 import React, { useState } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Box, Typography, FormControl, FormGroup, FormControlLabel, Checkbox, Paper, Grid, Button, TextField, Autocomplete } from '@mui/material';
+import { Bar } from 'react-chartjs-2';
 import { TrafficOutlined } from '@mui/icons-material';
 
-// Register chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+const windDirections = [
+  'Calm', 'SW', 'SSW', 'WSW', 'WNW', 'NW', 'West', 'NNW', 'NNE', 'South', 'North',
+  'Variable', 'SE', 'SSE', 'ESE', 'East', 'NE', 'ENE', 'E', 'W', 'S', 'VAR', 'CALM', 'N'
+];
+
+const weatherConditions = [
+  'Light Rain', 'Overcast', 'Mostly Cloudy', 'Rain', 'Light Snow', 'Haze', 'Scattered Clouds',
+  'Partly Cloudy', 'Clear', 'Snow', 'Light Freezing Drizzle', 'Light Drizzle', 'Fog', 
+  'Shallow Fog', 'Heavy Rain', 'Light Freezing Rain', 'Cloudy', 'Drizzle', 'Light Rain Showers', 
+  'Mist', 'Smoke', 'Patches of Fog', 'Light Freezing Fog', 'Light Haze', 'Light Thunderstorms and Rain',
+  'Thunderstorms and Rain', 'Fair', 'Volcanic Ash', 'Blowing Sand', 'Blowing Dust / Windy', 
+  'Widespread Dust', 'Fair / Windy', 'Rain Showers', 'Mostly Cloudy / Windy', 'Light Rain / Windy',
+  'Hail', 'Heavy Drizzle', 'Showers in the Vicinity', 'Thunderstorm', 'Light Rain Shower', 
+  'Light Rain with Thunder', 'Partly Cloudy / Windy', 'Thunder in the Vicinity', 'T-Storm', 
+  'Heavy Thunderstorms and Rain', 'Thunder', 'Heavy T-Storm', 'Funnel Cloud'
+];
 
 const AdminRoadFeatureAnalysis: React.FC = () => {
   const [streetData, setStreetData] = useState<any>({
-    Bump: false,
-    Crossing: false,
-    Give_Way: false,
-    Junction: false,
-    No_Exit: false,
-    Railway: false,
-    Roundabout: false,
-    Station: false,
-    Stop: false,
-    Traffic_Calming: false,
-    Traffic_Signal: false,
+    Bump: false, Crossing: false, Give_Way: false, Junction: false, No_Exit: false,
+    Railway: false, Roundabout: false, Station: false, Stop: false, Traffic_Calming: false, Traffic_Signal: false,
   });
-  const [selectedStreet, setSelectedStreet] = useState('00-199 FAIR LAWN PKWY');
   const [weatherData, setWeatherData] = useState({
     temperature: 75,
     pressure: 1013,
-    wind_direction: 'N',
+    wind_direction: 'Calm',
     wind_speed: 15,
     weather_condition: 'Clear',
   });
   const [accidentRisk, setAccidentRisk] = useState<number | null>(null);
 
-  const featureNames = [
-    'Bump', 'Crossing', 'Give_Way', 'Junction', 'No_Exit', 'Railway', 'Roundabout', 'Station', 'Stop', 'Traffic_Calming', 'Traffic_Signal'
-  ];
-
-  const handleWeatherChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, feature: string) => {
-    setWeatherData((prevData) => ({
-      ...prevData,
-      [feature]: event.target.value,
-    }));
-  };
-
-  const toggleFeature = (feature: string) => {
-    setStreetData((prevState: { [x: string]: any; }) => ({
-      ...prevState,
-      [feature]: !prevState[feature], // Toggle the feature value
-    }));
+  const handleWeatherChange = (key: string, value: string | number) => {
+    setWeatherData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handlePredictSeverity = () => {
@@ -78,42 +67,34 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, p: 2, ml:40 }}>
-      {/* Left Section */}
-      <Box sx={{ flex: 1, maxWidth: { md: '500px' }, ml: 2 }}>
-        <Typography variant="h5" gutterBottom>
-          Road Feature + Weather Analysis
-        </Typography>
-
-        <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'row', gap: 2 }}>
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h5" gutterBottom>Road Feature + Weather Analysis</Typography>
+        <Paper sx={{ p: 2 }}>
           <FormGroup>
             <Grid container spacing={1}>
-              {featureNames.map((feature) => (
+              {Object.keys(streetData).map((feature) => (
                 <Grid item xs={6} key={feature}>
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={streetData[feature] || false}
-                        onChange={() => toggleFeature(feature)}
+                        checked={streetData[feature]}
+                        onChange={() => setStreetData((prev: { [x: string]: any; }) => ({ ...prev, [feature]: !prev[feature] }))}
                       />
                     }
-                    label={feature.charAt(0).toUpperCase() + feature.slice(1).replace(/_/g, ' ')}
+                    label={feature.replace(/_/g, ' ')}
                   />
                 </Grid>
               ))}
             </Grid>
           </FormGroup>
 
-          <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-            Adjust Weather Data:
-          </Typography>
-
+          <Typography variant="subtitle1" sx={{ mt: 2 }}>Weather Data:</Typography>
           <TextField
             label="Temperature (°F)"
             type="number"
             value={weatherData.temperature}
-            onChange={(event) => handleWeatherChange(event, 'temperature')}
+            onChange={(e) => handleWeatherChange('temperature', +e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
@@ -121,7 +102,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
             label="Pressure (hPa)"
             type="number"
             value={weatherData.pressure}
-            onChange={(event) => handleWeatherChange(event, 'pressure')}
+            onChange={(e) => handleWeatherChange('pressure', +e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
@@ -129,73 +110,43 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
             label="Wind Speed (mph)"
             type="number"
             value={weatherData.wind_speed}
-            onChange={(event) => handleWeatherChange(event, 'wind_speed')}
+            onChange={(e) => handleWeatherChange('wind_speed', +e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
-          <TextField
-            label="Wind Direction"
+          <Autocomplete
+            options={windDirections}
             value={weatherData.wind_direction}
-            onChange={(event) => handleWeatherChange(event, 'wind_direction')}
+            onChange={(e, value) => handleWeatherChange('wind_direction', value || '')}
+            renderInput={(params) => <TextField {...params} label="Wind Direction" />}
             fullWidth
             sx={{ mb: 2 }}
           />
-          <TextField
-            label="Weather Condition"
+          <Autocomplete
+            options={weatherConditions}
             value={weatherData.weather_condition}
-            onChange={(event) => handleWeatherChange(event, 'weather_condition')}
+            onChange={(e, value) => handleWeatherChange('weather_condition', value || '')}
+            renderInput={(params) => <TextField {...params} label="Weather Condition" />}
             fullWidth
-            sx={{ mb: 2 }}
           />
         </Paper>
       </Box>
 
-      
-
-      {/* Right Section */}
-      <Box sx={{ flex: 1, display: 'block', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-        <Box sx={{ width: '100%', maxWidth: 600 }}>
-          <Bar
-            data={{
-              labels: featureNames,
-              datasets: [
-                {
-                  label: 'Road Features',
-                  data: featureNames.map((feature) => (streetData[feature] ? 1 : 0)),
-                  backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                  borderColor: 'rgba(75, 192, 192, 1)',
-                  borderWidth: 1,
-                },
-              ],
-            }}
-            options={{
-              responsive: true,
-              plugins: { legend: { position: 'top' } },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    stepSize: 1,
-                    callback: (value) => (value === 1 ? 'Enabled' : 'Disabled'),
-                  },
-                },
-              },
-            }}
-            width={300}
-            height={200}
-          />
-          <Typography
-            variant="subtitle1"
-            gutterBottom
-            sx={{
-              mt: 1,
-              fontWeight: 'bold',
-              color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',
-            }}
-          >
-            Predicted Severity: {accidentRisk !== null ? accidentRisk : 'Not calculated yet'}
-          </Typography>
-          <Button
+      <Box sx={{ flex: 1 }}>
+        <Bar
+          data={{
+            labels: Object.keys(streetData),
+            datasets: [{
+              label: 'Features Enabled',
+              data: Object.values(streetData).map((enabled) => (enabled ? 1 : 0)),
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            }],
+          }}
+        />
+        <Typography variant="subtitle1" color={accidentRisk && accidentRisk > 3 ? 'error' : 'primary'}  gutterBottom sx={{ mt: 1, fontWeight: 'bold'}}>
+          Predicted Severity: {accidentRisk || 'N/A'}
+        </Typography>
+        <Button
             variant="contained"
             color="primary"
             sx={{ padding: '10px 20px' }}
@@ -204,7 +155,6 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
           >
             Predict Severity
           </Button>
-        </Box>
       </Box>
     </Box>
   );

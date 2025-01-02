@@ -56,13 +56,17 @@ type RoadFeature struct {
 	TrafficSignal  bool `json:"traffic_signal"`
 }
 
-// Define the WeatherData struct
 type WeatherData struct {
-	Temperature      float64 `json:"temperature"`
-	Pressure         float64 `json:"pressure"`
-	WindDirection    string  `json:"wind_direction"`
-	WindSpeed        float64 `json:"wind_speed"`
-	WeatherCondition string  `json:"weather_condition"`
+	Humidity      string  `json:"humidity(%)"`
+	Precipitation string  `json:"precipitation(in)"`
+	Pressure      string  `json:"pressure(in)"`
+	Severity      float64 `json:"severity"`
+	Temperature   string  `json:"temperature(F)"`
+	Visibility    string  `json:"visibility(mi)"`
+	Weather       string  `json:"weather"`
+	WindChill     string  `json:"wind_chill(F)"`
+	WindDirection string  `json:"wind_direction"`
+	WindSpeed     string  `json:"wind_speed(mph)"`
 }
 
 type StreetData struct {
@@ -469,7 +473,7 @@ func CalculateSeverity(c *gin.Context) {
 	pressure := c.DefaultQuery("pressure", "0")
 	windDirection := c.DefaultQuery("wind_direction", "")
 	windSpeed := c.DefaultQuery("wind_speed", "0")
-	weatherCondition := c.DefaultQuery("weather_condition", "")
+	//weather := c.DefaultQuery("weather", "")
 
 	bump := c.DefaultQuery("bump", "false") == "true"
 	crossing := c.DefaultQuery("crossing", "false") == "true"
@@ -485,11 +489,10 @@ func CalculateSeverity(c *gin.Context) {
 
 	// Convert the extracted query parameters into the WeatherData and RoadFeature structs
 	weather := WeatherData{
-		Temperature:      parseFloat(temperature),
-		Pressure:         parseFloat(pressure),
-		WindDirection:    windDirection,
-		WindSpeed:        parseFloat(windSpeed),
-		WeatherCondition: weatherCondition,
+		Temperature:   temperature,
+		Pressure:      pressure,
+		WindDirection: windDirection,
+		WindSpeed:     windSpeed,
 	}
 
 	road := RoadFeature{
@@ -572,85 +575,75 @@ func GetGeoLocation(c *gin.Context) {
 	})
 }
 
-// Function to fetch weather and road data for each street
 func generateRouteData(starting, destination string) (map[string]StreetData, error) {
 	locations := map[string][2]float64{
-		"BRICE%20RD": {39.929226798104274, -82.83102723124017},
-		"MAIN%20ST":  {39.930000, -82.830000},
-		"PARK%20AVE": {39.931000, -82.832000},
-		"OAK%20DR":   {39.932000, -82.833000},
+		"BRICE%20RD": {39.963948881549136, -82.82847833227663},
+		"MAIN%20ST":  {43.689040750000004, -79.30162111836233},
+		"PARK%20AVE": {40.811797284722154, -73.93095958221829},
+		"OAK%20DR":   {49.39040391792303, -98.88972155764887},
 	}
 
-	// Prepare a map to store the results
 	result := make(map[string]StreetData)
 
-	// Iterate over the hardcoded street locations
 	for streetName, coords := range locations {
-		// Construct the URL with the correct street name and coordinates
-		url := fmt.Sprintf("http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
-			streetName, coords[0], coords[1])
-
-		// Log the URL for debugging
+		url := fmt.Sprintf(
+			"http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
+			streetName, coords[0], coords[1],
+		)
 		log.Printf("Sending GET request to: %s\n", url)
 
-		// Send the GET request
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("Error fetching data for %s: %v\n", streetName, err)
+			log.Printf("HTTP GET error for %s: %v\n", streetName, err)
 			continue
 		}
 		defer resp.Body.Close()
 
-		// Check the response status code
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("Non-OK status for %s: %d\n", streetName, resp.StatusCode)
+			log.Printf("Non-OK HTTP status for %s: %d\n", streetName, resp.StatusCode)
 			continue
 		}
 
-		// Read and log the response body
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Error reading response body for %s: %v\n", streetName, err)
 			continue
 		}
-
-		// Log the raw response body for debugging
 		log.Printf("Response body for %s: %s\n", streetName, string(body))
 
-		// Parse the JSON response
 		var streetData StreetData
 		err = json.Unmarshal(body, &streetData)
 		if err != nil {
-			log.Printf("Error unmarshaling data for %s: %v\n", streetName, err)
+			log.Printf("JSON Unmarshal error for %s: %v\n", streetName, err)
 			continue
 		}
 
-		// Store the result for this street
+		log.Printf("Parsed data for %s: %+v\n", streetName, streetData)
 		result[streetName] = streetData
+	}
+
+	if len(result) == 0 {
+		return nil, fmt.Errorf("no valid data received for any street")
 	}
 
 	return result, nil
 }
 
-// HTTP handler to trigger generateRouteData and return the result as JSON
 func getStartingDestinationDataHandler(c *gin.Context) {
-	// Extract the query parameters
 	starting := c.DefaultQuery("starting", "")
 	destination := c.DefaultQuery("destination", "")
 
-	// Validate that both parameters are provided
 	if starting == "" || destination == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' query parameters are required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' parameters are required"})
 		return
 	}
 
-	// Call the generateRouteData function to get the data
 	data, err := generateRouteData(starting, destination)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error generating route data: %v", err)})
+		log.Printf("Error generating route data: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Return the data as JSON
 	c.JSON(http.StatusOK, data)
 }

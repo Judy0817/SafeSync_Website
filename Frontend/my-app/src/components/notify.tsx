@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FaExclamationTriangle, FaCheckCircle } from 'react-icons/fa'; // Importing Font Awesome icons
+
 
 interface RoadFeatures {
   crossings: boolean;
@@ -66,7 +68,7 @@ const AlertSystem = () => {
     try {
       const response = await fetch(`http://localhost:8080/weather/geolocation?street_name=${streetName}`);
       const data = await response.json();
-      
+
       if (data.latitude && data.longitude) {
         fetchWeatherData(streetName, data.latitude, data.longitude);
       } else {
@@ -151,89 +153,108 @@ const AlertSystem = () => {
     fetchGeolocation(streetName);
   };
 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h2>Street Weather and Road Features Information</h2>
+return (
+  <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: '#333' }}>
+    <h2 style={{ textAlign: 'center', color: '#004085', marginBottom: '20px' }}>
+      Street Weather and Road Features Information
+    </h2>
 
-      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
-        <input
-          type="text"
-          placeholder="Enter street name"
-          value={streetName}
-          onChange={(e) => setStreetName(e.target.value)}
-          style={{ padding: '8px', flex: 1 }}
-        />
-        <button type="submit" style={{ padding: '8px', width: '150px' }}>
-          Get Weather Data
-        </button>
-      </form>
+    <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
+      <input
+        type="text"
+        placeholder="Enter street name"
+        value={streetName}
+        onChange={(e) => setStreetName(e.target.value)}
+        style={{ padding: '10px', flex: 1, border: '1px solid #ccc', borderRadius: '4px', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)' }}
+      />
+      <button
+        type="submit"
+        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        Get Weather Data
+      </button>
+    </form>
 
-      {filteredStreetNames.length > 0 && (
-        <ul style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '5px' }}>
-          {filteredStreetNames.map((street, index) => (
-            <li
-              key={index}
-              onClick={() => {
-                setStreetName(street);
-                setFilteredStreetNames([]);
-                fetchGeolocation(street);
-              }}
-              style={{ cursor: 'pointer', padding: '5px', backgroundColor: '#f9f9f9', margin: '5px 0' }}
-            >
-              {street}
-            </li>
-          ))}
-        </ul>
-      )}
+    {filteredStreetNames.length > 0 && (
+      <ul style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', listStyle: 'none', marginTop: '10px' }}>
+        {filteredStreetNames.map((street, index) => (
+          <li
+            key={index}
+            onClick={() => {
+              setStreetName(street);
+              setFilteredStreetNames([]);
+              fetchGeolocation(street);
+            }}
+            style={{ cursor: 'pointer', padding: '10px', backgroundColor: '#f1f1f1', margin: '5px 0', borderRadius: '4px', transition: 'background-color 0.3s' }}
+          >
+            {street}
+          </li>
+        ))}
+      </ul>
+    )}
 
-      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+    {errorMessage && <p style={{ color: 'red', textAlign: 'center' }}>{errorMessage}</p>}
 
-      {weatherDataModel ? (
-        <div style={{ marginTop: '20px' }}>
-          <h3>Weather and Road Features for {streetName}</h3>
-          <ul>
-            <li>Weather Condition: {weatherDataModel.condition}</li>
-            <li>Temperature: {weatherDataModel.temperature.toFixed(2)} °F</li>
-            <li>Humidity: {weatherDataModel.humidity}%</li>
-            <li>Wind Chill: {weatherDataModel.windChill.toFixed(2)} °F</li>
-            <li>Pressure: {weatherDataModel.pressure} in</li>
-            <li>Visibility: {weatherDataModel.visibility} mi</li>
-            <li>Wind Direction: {weatherDataModel.windDirection}</li>
-            <li>Wind Speed: {weatherDataModel.windSpeed} mph</li>
-            <li>Precipitation: {weatherDataModel.precipitation} in</li>
-            <li>Severity: {weatherDataModel.severity.toFixed(2)}</li>
-          </ul>
+    {weatherDataModel ? (
+      <div style={{ marginTop: '20px' }}>
+        <h3 style={{ textAlign: 'center', color: '#28a745', marginBottom: '20px' }}>
+          Weather and Road Features for {streetName}
+        </h3>
 
-          <h4>Road Features:</h4>
-          <ul>
-            <li>Crossings: {weatherDataModel.roadFeatures.crossings ? 'Yes' : 'No'}</li>
-            <li>Give Way: {weatherDataModel.roadFeatures.give_way ? 'Yes' : 'No'}</li>
-            <li>Junction: {weatherDataModel.roadFeatures.junction ? 'Yes' : 'No'}</li>
-            <li>No Exit: {weatherDataModel.roadFeatures.no_exit ? 'Yes' : 'No'}</li>
-            <li>Railway: {weatherDataModel.roadFeatures.railway ? 'Yes' : 'No'}</li>
-            <li>Roundabout: {weatherDataModel.roadFeatures.roundabout ? 'Yes' : 'No'}</li>
-            <li>Speed Bumps: {weatherDataModel.roadFeatures.speed_bumps ? 'Yes' : 'No'}</li>
-            <li>Station: {weatherDataModel.roadFeatures.station ? 'Yes' : 'No'}</li>
-            <li>Stop: {weatherDataModel.roadFeatures.stop ? 'Yes' : 'No'}</li>
-          </ul>
+        {predictedSeverity !== null && (
+          <div style={{ marginTop: '20px', textAlign: 'center', color: weatherDataModel.severity > 2 ? 'red' : 'green' }}>
+            <h3>
+              Severity: {predictedSeverity}
+              {predictedSeverity > 2 ? (
+                <FaExclamationTriangle style={{ color: 'red', marginLeft: '10px' }} />
+              ) : (
+                <FaCheckCircle style={{ color: 'green', marginLeft: '10px' }} />
+              )}
+            </h3>
+          </div>
+        )}
 
-          {/* Display Predicted Severity */}
-          {predictedSeverity !== null ? (
-            <div style={{ marginTop: '20px' }}>
-              <h4>Predicted Severity: {predictedSeverity}</h4>
-              <p style={{ color: predictedSeverity >= 4 ? 'red' : 'green' }}>
-                {predictedSeverity >= 4 ? 'High severity risk' : 'Low severity risk'}
-              </p>
+        {/* Weather Cards */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          {[
+            { title: 'Condition', value: weatherDataModel.condition },
+            { title: 'Temperature', value: `${weatherDataModel.temperature}°F` },
+            { title: 'Humidity', value: `${weatherDataModel.humidity}%` },
+            { title: 'Wind Chill', value: `${weatherDataModel.windChill}°F` },
+            { title: 'Pressure', value: `${weatherDataModel.pressure} in` },
+            { title: 'Visibility', value: `${weatherDataModel.visibility} mi` },
+            { title: 'Wind Direction', value: weatherDataModel.windDirection },
+            { title: 'Wind Speed', value: `${weatherDataModel.windSpeed} mph` },
+            { title: 'Precipitation', value: `${weatherDataModel.precipitation} in` }
+          ].map((weather, index) => (
+            <div key={index} style={{ flex: '0 0 30%', marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+              <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{weather.title}</h4>
+              <p>{weather.value}</p>
             </div>
-          ) : (
-            <p>Loading predicted severity...</p>
-          )}
+          ))}
         </div>
-      ) : (
-        <p>No data available.</p>
-      )}
-    </div>
-  );
+
+        {/* Road Feature Cards */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between' }}>
+          {Object.entries(weatherDataModel.roadFeatures).map(([feature, isEnabled], index) => (
+            <div key={index} style={{ flex: '0 0 30%', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
+              <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{feature.replace('_', ' ').toUpperCase()}</h4>
+              <p>{isEnabled ? <span style={{ color: 'green' }}>✅</span> : <span style={{ color: 'red' }}>❌</span>}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Severity */}
+
+      </div>
+    ) : (
+      <p style={{ textAlign: 'center', color: '#888' }}>No data available. Please search for a street name.</p>
+    )}
+  </div>
+);
+
+  
+  
 };
 
 export default AlertSystem;
