@@ -355,15 +355,17 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 
 	// Format the road features in the required structure
 	roadFeaturesFormatted := gin.H{
-		"speed_bumps": features[0].Bump,
-		"crossings":   features[0].Crossing,
-		"give_way":    features[0].GiveWay,
-		"junction":    features[0].Junction,
-		"no_exit":     features[0].NoExit,
-		"railway":     features[0].Railway,
-		"roundabout":  features[0].Roundabout,
-		"station":     features[0].Station,
-		"stop":        features[0].Stop,
+		"bump":            features[0].Bump,
+		"crossing":        features[0].Crossing,
+		"give_way":        features[0].GiveWay,
+		"junction":        features[0].Junction,
+		"no_exit":         features[0].NoExit,
+		"railway":         features[0].Railway,
+		"roundabout":      features[0].Roundabout,
+		"station":         features[0].Station,
+		"stop":            features[0].Stop,
+		"traffic_calming": features[0].TrafficCalming,
+		"traffic_signal":  features[0].TrafficSignal,
 	}
 
 	// Define the data structure for the final output

@@ -53,16 +53,24 @@ const AlertSystem = () => {
     fetchStreetNames();
   }, []);
 
+  // Filter street names based on input
   useEffect(() => {
     if (streetName.trim() === '') {
       setFilteredStreetNames([]);
     } else {
-      const filtered = streetNames.filter((street) =>
-        street.toLowerCase().includes(streetName.toLowerCase())
-      );
-      setFilteredStreetNames(filtered);
+      const lowerStreetName = streetName.toLowerCase();
+      const sortedFiltered = streetNames
+        .filter((street) => street.toLowerCase().includes(lowerStreetName)) // Filter matching streets
+        .sort((a, b) => {
+          // Exact match comes first
+          if (a.toLowerCase() === lowerStreetName) return -1;
+          if (b.toLowerCase() === lowerStreetName) return 1;
+          return a.localeCompare(b); // Fallback to alphabetical order
+        });
+      setFilteredStreetNames(sortedFiltered);
     }
   }, [streetName, streetNames]);
+  
 
   const fetchGeolocation = async (streetName: string) => {
     try {
@@ -200,24 +208,32 @@ return (
         <h3 style={{ textAlign: 'center', color: '#28a745', marginBottom: '20px' }}>
           Weather and Road Features for {streetName}
         </h3>
-
         {predictedSeverity !== null && (
-          <div style={{ marginTop: '20px', textAlign: 'center', color: weatherDataModel.severity > 2 ? 'red' : 'green' }}>
-            <h3>
-              Severity: {predictedSeverity}
-              {predictedSeverity > 2 ? (
-                <FaExclamationTriangle style={{ color: 'red', marginLeft: '10px' }} />
-              ) : (
-                <FaCheckCircle style={{ color: 'green', marginLeft: '10px' }} />
-              )}
-            </h3>
-          </div>
-        )}
+  <div
+    style={{
+      marginTop: '20px',
+      textAlign: 'center',
+      color: predictedSeverity > 2 ? 'red' : 'green',
+      // border: `2px solid ${predictedSeverity > 2 ? 'red' : 'green'}`,
+      padding: '10px',
+    }}
+  >
+    <h3>
+      Severity: {predictedSeverity}
+      {predictedSeverity > 2 ? (
+        <FaExclamationTriangle style={{ color: 'red', marginLeft: '10px' }} />
+      ) : (
+        <FaCheckCircle style={{ color: 'green', marginLeft: '10px' }} />
+      )}
+    </h3>
+  </div>
+)}
+
 
         {/* Weather Cards */}
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           {[
-            { title: 'Condition', value: weatherDataModel.condition },
+            { title: 'Weather Condition', value: weatherDataModel.condition },
             { title: 'Temperature', value: `${weatherDataModel.temperature}°F` },
             { title: 'Humidity', value: `${weatherDataModel.humidity}%` },
             { title: 'Wind Chill', value: `${weatherDataModel.windChill}°F` },
@@ -238,7 +254,7 @@ return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between' }}>
           {Object.entries(weatherDataModel.roadFeatures).map(([feature, isEnabled], index) => (
             <div key={index} style={{ flex: '0 0 30%', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-              <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{feature.replace('_', ' ').toUpperCase()}</h4>
+              <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{feature.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</h4>
               <p>{isEnabled ? <span style={{ color: 'green' }}>✅</span> : <span style={{ color: 'red' }}>❌</span>}</p>
             </div>
           ))}
