@@ -22,10 +22,10 @@ interface WeatherDataModel {
   humidity: number;
   windChill: number;
   pressure: number;
-  visibility: number;
+  // visibility: number;
   windDirection: string;
   windSpeed: number;
-  precipitation: number;
+  // precipitation: number;
   severity: number;
   roadFeatures: RoadFeatures;
 }
@@ -103,10 +103,10 @@ const AlertSystem = () => {
         humidity: parseFloat(weather["humidity(%)"]) || 0,
         windChill: parseFloat(weather["wind_chill(F)"]) || 0,
         pressure: parseFloat(weather["pressure(in)"]) || 0,
-        visibility: parseFloat(weather["visibility(mi)"]) || 0,
+        // visibility: parseFloat(weather["visibility(mi)"]) || 0,
         windDirection: weather.wind_direction || 'N/A',
         windSpeed: parseFloat(weather["wind_speed(mph)"]) || 0,
-        precipitation: parseFloat(weather["precipitation(in)"]) || 0,
+        // precipitation: parseFloat(weather["precipitation(in)"]) || 0,
         severity: weather.severity || 0,
         roadFeatures: roadFeatures,
       });
@@ -127,6 +127,8 @@ const AlertSystem = () => {
         wind_direction: weather.wind_direction,
         wind_speed: weather["wind_speed(mph)"].toString(),
         weather_condition: weather.weather,
+        wind_chill:weather["wind_chill(F)"],
+        humidity:weather["humidity(%)"],
         bumplse: roadFeatures.speed_bumps ? 'true' : 'false',
         junction: roadFeatures.junction ? 'true' : 'false',
         no_exit: roadFeatures.no_exit ? 'true' : 'false',
@@ -238,10 +240,10 @@ return (
             { title: 'Humidity', value: `${weatherDataModel.humidity}%` },
             { title: 'Wind Chill', value: `${weatherDataModel.windChill}°F` },
             { title: 'Pressure', value: `${weatherDataModel.pressure} in` },
-            { title: 'Visibility', value: `${weatherDataModel.visibility} mi` },
+            // { title: 'Visibility', value: `${weatherDataModel.visibility} mi` },
             { title: 'Wind Direction', value: weatherDataModel.windDirection },
             { title: 'Wind Speed', value: `${weatherDataModel.windSpeed} mph` },
-            { title: 'Precipitation', value: `${weatherDataModel.precipitation} in` }
+            // { title: 'Precipitation', value: `${weatherDataModel.precipitation} in` }
           ].map((weather, index) => (
             <div key={index} style={{ flex: '0 0 30%', marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
               <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{weather.title}</h4>

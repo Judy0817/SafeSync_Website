@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,8 @@ const (
 // RoadFeature represents the structure of a row in the database
 type RoadFeatureWIthSeverity struct {
 	StreetName      string  `json:"street_name"`
+	CityName        string  `json:"city_name"`
+	CountyName      string  `json:"county_name"`
 	Bump            bool    `json:"bump"`
 	Crossing        bool    `json:"crossing"`
 	GiveWay         bool    `json:"give_way"`
@@ -74,6 +77,38 @@ type StreetData struct {
 	Weather      WeatherData `json:"weather"`
 }
 
+const apiKey = "AIzaSyCaLb77xg07_K1JGOV6szhoQqVOn5uUAuo"
+
+type DirectionsResponse struct {
+	Routes []Route `json:"routes"`
+}
+
+type Route struct {
+	Legs []Leg `json:"legs"`
+}
+
+type Leg struct {
+	Steps []Step `json:"steps"`
+}
+
+type Step struct {
+	StartLocation Location `json:"start_location"`
+	EndLocation   Location `json:"end_location"`
+}
+
+type Location struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+type ReverseGeocodingResponse struct {
+	Results []GeocodingResult `json:"results"`
+}
+
+type GeocodingResult struct {
+	FormattedAddress string `json:"formatted_address"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -111,8 +146,8 @@ func main() {
 		}
 		c.JSON(http.StatusOK, data)
 	})
-	router.GET("/weather/geolocation", GetGeoLocation)
-	router.GET("json/getStartingDestinationData", getStartingDestinationDataHandler)
+	router.GET("/json/geolocation", GetGeoLocation)
+	router.GET("/json/getroutedata", generateRouteData)
 
 	fmt.Println("Server is running on port 8085")
 	log.Fatal(http.ListenAndServe(":8085", router))
@@ -184,58 +219,70 @@ func getWindDirection(deg float64) string {
 
 // GetStreetNames handles requests to fetch only street names from the database
 func GetStreetNames(c *gin.Context) {
-	// Query the database for street names
-	query := "SELECT street_name FROM road_features_with_severity"
+	// Query the database for street names, cities, and counties
+	query := "SELECT street_name, city, county FROM street_geo_locations"
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Fatal("Error fetching data:", err)
+		log.Println("Error fetching data:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
 		return
 	}
 	defer rows.Close()
 
-	var streetNames []string
+	var results []string
 	for rows.Next() {
-		var streetName string
-		err := rows.Scan(&streetName)
+		var streetName, city, county string
+		err := rows.Scan(&streetName, &city, &county)
 		if err != nil {
-			log.Fatal("Error scanning data:", err)
+			log.Println("Error scanning data:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process data"})
 			return
 		}
-		streetNames = append(streetNames, streetName)
+
+		// Combine streetName, city, and county into the desired format
+		formatted := streetName + "," + city + "," + county
+		results = append(results, formatted)
 	}
 
 	// Handle any errors encountered during iteration
 	err = rows.Err()
 	if err != nil {
-		log.Fatal("Error during rows iteration:", err)
+		log.Println("Error during rows iteration:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing data"})
 		return
 	}
 
-	// If no street names are found
-	if len(streetNames) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No street names found"})
+	// If no records are found
+	if len(results) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No records found"})
 		return
 	}
 
-	// Respond with JSON for the list of street names
-	c.JSON(http.StatusOK, streetNames)
+	// Respond with JSON for the list of formatted strings
+	c.JSON(http.StatusOK, results)
 }
 
 func GetRoadFeatures(c *gin.Context) {
-	// Get the street name from query parameters
+	// Get the street name, city name, and county name from query parameters
 	streetName := c.DefaultQuery("street_name", "") // Default to empty if no street_name is provided
+	cityName := c.DefaultQuery("city_name", "")     // Default to empty if no city_name is provided
+	countyName := c.DefaultQuery("county_name", "") // Default to empty if no county_name is provided
 
-	if streetName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Street name is required"})
+	// Check if all necessary parameters are provided
+	if streetName == "" || cityName == "" || countyName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Street name, city name, and county name are required"})
 		return
 	}
 
-	// Query the database for the specific street name
-	query := "SELECT * FROM road_features_with_severity WHERE street_name = $1"
-	rows, err := db.Query(query, streetName)
+	// Normalize the inputs to lowercase for case-insensitive comparison
+	streetName = strings.ToLower(streetName)
+	cityName = strings.ToLower(cityName)
+	countyName = strings.ToLower(countyName)
+
+	// Query the database for the specific street name, city name, and county name
+	query := `SELECT * FROM road_features_with_severity 
+			  WHERE LOWER(street_name) = $1 AND LOWER(city_name) = $2 AND LOWER(county_name) = $3`
+	rows, err := db.Query(query, streetName, cityName, countyName)
 	if err != nil {
 		log.Fatal("Error fetching data:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
@@ -248,6 +295,8 @@ func GetRoadFeatures(c *gin.Context) {
 		var feature RoadFeatureWIthSeverity
 		err := rows.Scan(
 			&feature.StreetName,
+			&feature.CityName,
+			&feature.CountyName,
 			&feature.Bump,
 			&feature.Crossing,
 			&feature.GiveWay,
@@ -277,28 +326,34 @@ func GetRoadFeatures(c *gin.Context) {
 		return
 	}
 
-	// If no data is found for the provided street name
+	// If no data is found for the provided street, city, and county
 	if len(features) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No road features found for the specified street"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "No road features found for the specified street, city, and county"})
 		return
 	}
 
-	// Respond with JSON for the specific street
+	// Respond with JSON for the specific street, city, and county
 	c.JSON(http.StatusOK, features)
 }
 
 func GetRoadFeaturesAndWeather(c *gin.Context) {
-	// Get the street name from query parameters
+	// Get the street name, city name, and county name from query parameters
 	streetName := c.DefaultQuery("street_name", "") // Default to empty if no street_name is provided
+	cityName := c.DefaultQuery("city_name", "")     // Default to empty if no city_name is provided
+	countyName := c.DefaultQuery("county_name", "") // Default to empty if no county_name is provided
 
-	if streetName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Street name is required"})
+	// Check if street name is provided
+	if streetName == "" || cityName == "" || countyName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Street name, county name and city names are required"})
 		return
 	}
 
-	// Query the database for the specific street name
-	query := "SELECT * FROM road_features_with_severity WHERE street_name = $1"
-	rows, err := db.Query(query, streetName)
+	// Query the database for the specific street name, city name, and county name
+	query := `
+        SELECT * FROM road_features_with_severity 
+        WHERE street_name = $1 AND city_name = $2 AND county_name = $3
+    `
+	rows, err := db.Query(query, streetName, cityName, countyName)
 	if err != nil {
 		log.Fatal("Error fetching data:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
@@ -311,6 +366,8 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 		var feature RoadFeatureWIthSeverity
 		err := rows.Scan(
 			&feature.StreetName,
+			&feature.CityName,   // Add CityName to struct
+			&feature.CountyName, // Add CountyName to struct
 			&feature.Bump,
 			&feature.Crossing,
 			&feature.GiveWay,
@@ -340,9 +397,9 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 		return
 	}
 
-	// If no data is found for the provided street name
+	// If no data is found for the provided street name, city name, and county name
 	if len(features) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No road features found for the specified street"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "No road features found for the specified street, city, or county"})
 		return
 	}
 
@@ -532,16 +589,20 @@ func parseFloat(value string) float64 {
 
 func GetGeoLocation(c *gin.Context) {
 	streetName := c.DefaultQuery("street_name", "")
-	if streetName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "street_name parameter is required"})
+	cityName := c.DefaultQuery("city_name", "")
+	countyName := c.DefaultQuery("county_name", "")
+
+	if streetName == "" || cityName == "" || countyName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "street_name, city_name, and county_name parameters are required"})
 		return
 	}
 
-	// Encode the street name to handle special characters properly
-	encodedStreetName := url.QueryEscape(streetName)
+	// Build the query string for the geolocation API
+	query := fmt.Sprintf("%s, %s, %s", streetName, cityName, countyName)
+	encodedQuery := url.QueryEscape(query)
 
 	// Using Nominatim API for geolocation (OpenStreetMap)
-	apiURL := fmt.Sprintf("https://nominatim.openstreetmap.org/search?q=%s&format=json", encodedStreetName)
+	apiURL := fmt.Sprintf("https://nominatim.openstreetmap.org/search?q=%s&format=json", encodedQuery)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get geolocation"})
@@ -559,7 +620,7 @@ func GetGeoLocation(c *gin.Context) {
 
 	// If no results, return error
 	if len(geoResults) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Street not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Location not found"})
 		return
 	}
 
@@ -567,7 +628,7 @@ func GetGeoLocation(c *gin.Context) {
 	lat := geoResults[0]["lat"]
 	lon := geoResults[0]["lon"]
 
-	// Convert lat and lon to float64
+	// Convert lat and lon to string
 	latitude, _ := lat.(string)
 	longitude, _ := lon.(string)
 
@@ -577,75 +638,169 @@ func GetGeoLocation(c *gin.Context) {
 	})
 }
 
-func generateRouteData(starting, destination string) (map[string]StreetData, error) {
-	locations := map[string][2]float64{
-		"BRICE%20RD": {39.963948881549136, -82.82847833227663},
-		"MAIN%20ST":  {43.689040750000004, -79.30162111836233},
-		"PARK%20AVE": {40.811797284722154, -73.93095958221829},
-		"OAK%20DR":   {49.39040391792303, -98.88972155764887},
-	}
+// func generateRouteData(starting, destination string) (map[string]StreetData, error) {
+// 	locations := map[string][2]float64{
+// 		"BRICE%20RD": {39.963948881549136, -82.82847833227663},
+// 		"MAIN%20ST":  {43.689040750000004, -79.30162111836233},
+// 		"PARK%20AVE": {40.811797284722154, -73.93095958221829},
+// 		"OAK%20DR":   {49.39040391792303, -98.88972155764887},
+// 	}
 
-	result := make(map[string]StreetData)
+// 	result := make(map[string]StreetData)
 
-	for streetName, coords := range locations {
-		url := fmt.Sprintf(
-			"http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
-			streetName, coords[0], coords[1],
-		)
-		log.Printf("Sending GET request to: %s\n", url)
+// 	for streetName, coords := range locations {
+// 		url := fmt.Sprintf(
+// 			"http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
+// 			streetName, coords[0], coords[1],
+// 		)
+// 		log.Printf("Sending GET request to: %s\n", url)
 
-		resp, err := http.Get(url)
-		if err != nil {
-			log.Printf("HTTP GET error for %s: %v\n", streetName, err)
-			continue
-		}
-		defer resp.Body.Close()
+// 		resp, err := http.Get(url)
+// 		if err != nil {
+// 			log.Printf("HTTP GET error for %s: %v\n", streetName, err)
+// 			continue
+// 		}
+// 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("Non-OK HTTP status for %s: %d\n", streetName, resp.StatusCode)
-			continue
-		}
+// 		if resp.StatusCode != http.StatusOK {
+// 			log.Printf("Non-OK HTTP status for %s: %d\n", streetName, resp.StatusCode)
+// 			continue
+// 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("Error reading response body for %s: %v\n", streetName, err)
-			continue
-		}
-		log.Printf("Response body for %s: %s\n", streetName, string(body))
+// 		body, err := ioutil.ReadAll(resp.Body)
+// 		if err != nil {
+// 			log.Printf("Error reading response body for %s: %v\n", streetName, err)
+// 			continue
+// 		}
+// 		log.Printf("Response body for %s: %s\n", streetName, string(body))
 
-		var streetData StreetData
-		err = json.Unmarshal(body, &streetData)
-		if err != nil {
-			log.Printf("JSON Unmarshal error for %s: %v\n", streetName, err)
-			continue
-		}
+// 		var streetData StreetData
+// 		err = json.Unmarshal(body, &streetData)
+// 		if err != nil {
+// 			log.Printf("JSON Unmarshal error for %s: %v\n", streetName, err)
+// 			continue
+// 		}
 
-		log.Printf("Parsed data for %s: %+v\n", streetName, streetData)
-		result[streetName] = streetData
-	}
+// 		log.Printf("Parsed data for %s: %+v\n", streetName, streetData)
+// 		result[streetName] = streetData
+// 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("no valid data received for any street")
-	}
+// 	if len(result) == 0 {
+// 		return nil, fmt.Errorf("no valid data received for any street")
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
-func getStartingDestinationDataHandler(c *gin.Context) {
-	starting := c.DefaultQuery("starting", "")
+// func getStartingDestinationDataHandler(c *gin.Context) {
+// 	starting := c.DefaultQuery("starting", "")
+// 	destination := c.DefaultQuery("destination", "")
+
+// 	if starting == "" || destination == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' parameters are required"})
+// 		return
+// 	}
+
+// 	data, err := generateRouteData(starting, destination)
+// 	if err != nil {
+// 		log.Printf("Error generating route data: %v\n", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, data)
+// }
+
+func generateRouteData(c *gin.Context) {
+	// Get origin and destination from query parameters
+	origin := c.DefaultQuery("origin", "")
 	destination := c.DefaultQuery("destination", "")
 
-	if starting == "" || destination == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' parameters are required"})
+	// Validate if origin and destination are provided
+	if origin == "" || destination == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Origin and Destination are required"})
 		return
 	}
 
-	data, err := generateRouteData(starting, destination)
+	// URL encode the origin and destination to safely include them in the URL
+	encodedOrigin := url.QueryEscape(origin)
+	encodedDestination := url.QueryEscape(destination)
+
+	// Prepare the Google Maps Directions API URL
+	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/directions/json?origin=%s&destination=%s&key=%s", encodedOrigin, encodedDestination, apiKey)
+
+	// Make the API request
+	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("Error generating route data: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to make API request"})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Check if the response status is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get valid response from Google Maps API", "status": resp.Status})
 		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	// Parse the JSON response
+	var directionsResponse DirectionsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&directionsResponse); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode API response"})
+		return
+	}
+
+	// Extract geo locations from the route's steps
+	var geoLocations []Location
+	for _, route := range directionsResponse.Routes {
+		for _, leg := range route.Legs {
+			for _, step := range leg.Steps {
+				geoLocations = append(geoLocations, step.StartLocation, step.EndLocation)
+			}
+		}
+	}
+
+	// Get street names by reverse geocoding the geo locations
+	var streetNames []string
+	for _, location := range geoLocations {
+		streetName, err := reverseGeocode(location)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reverse geocode location"})
+			return
+		}
+		streetNames = append(streetNames, streetName)
+	}
+
+	// Return the street names as a JSON response
+	c.JSON(http.StatusOK, gin.H{"street_names": streetNames})
+}
+
+func reverseGeocode(location Location) (string, error) {
+	// Prepare the Google Maps Geocoding API URL
+	geocodeURL := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&key=%s", location.Lat, location.Lng, apiKey)
+
+	// Make the API request for reverse geocoding
+	resp, err := http.Get(geocodeURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Check if the response status is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Failed to get valid response from Google Maps Geocoding API")
+	}
+
+	// Parse the reverse geocoding response
+	var geocodingResponse ReverseGeocodingResponse
+	if err := json.NewDecoder(resp.Body).Decode(&geocodingResponse); err != nil {
+		return "", err
+	}
+
+	// Return the formatted address (street name)
+	if len(geocodingResponse.Results) > 0 {
+		return geocodingResponse.Results[0].FormattedAddress, nil
+	}
+
+	return "", fmt.Errorf("No results found for the location")
 }

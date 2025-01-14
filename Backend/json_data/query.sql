@@ -2,7 +2,9 @@
 CREATE DATABASE Json_DB;
 
 CREATE TABLE road_features_with_severity (
-    street_name TEXT PRIMARY KEY,
+    street_name TEXT,
+    city_name TEXT,
+    county_name TEXT,
     bump BOOLEAN,
     crossing BOOLEAN,
     give_way BOOLEAN,
@@ -14,7 +16,23 @@ CREATE TABLE road_features_with_severity (
     stop BOOLEAN,
     traffic_calming BOOLEAN,
     traffic_signal BOOLEAN,
-    average_severity FLOAT
+    average_severity NUMERIC
 );
 
+
 SELECT * FROM road_features_with_severity;
+
+SELECT * FROM road_features_with_severity WHERE street_name = 'BRICE RD' AND city_name = 'REYNOLDSBURG' AND county_name = 'FRANKLIN';
+
+
+SELECT * FROM street_geo_locations;
+
+
+CREATE TABLE street_geo_locations (
+    id SERIAL PRIMARY KEY,
+    street_name VARCHAR(255),
+    city VARCHAR(255),
+    county VARCHAR(255),
+    geo_locations JSONB
+);
+

@@ -31,6 +31,8 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
     wind_direction: 'Calm',
     wind_speed: 15,
     weather_condition: 'Clear',
+    wind_chill:19,
+    humidity:45
   });
   const [accidentRisk, setAccidentRisk] = useState<number | null>(null);
 
@@ -45,6 +47,8 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
       wind_direction: weatherData.wind_direction,
       wind_speed: weatherData.wind_speed.toString(),
       weather_condition: weatherData.weather_condition,
+      wind_chill:weatherData.wind_chill.toString(),
+      humidity:weatherData.humidity.toString(),
       bump: streetData.Bump ? 'true' : 'false',
       crossing: streetData.Crossing ? 'true' : 'false',
       give_way: streetData.Give_Way ? 'true' : 'false',
@@ -128,6 +132,23 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
             onChange={(e, value) => handleWeatherChange('weather_condition', value || '')}
             renderInput={(params) => <TextField {...params} label="Weather Condition" />}
             fullWidth
+          />
+          <TextField
+            label="Wind Chill (F)"
+            type="number"
+            value={weatherData.wind_chill}
+            onChange={(e) => handleWeatherChange('wind_chill', +e.target.value)}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Humidity (%)"
+            type="number"
+            value={weatherData.humidity
+            }
+            onChange={(e) => handleWeatherChange('humidity', +e.target.value)}
+            fullWidth
+            sx={{ mb: 2 }}
           />
         </Paper>
       </Box>

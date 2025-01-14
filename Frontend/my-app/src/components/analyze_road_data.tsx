@@ -22,7 +22,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 const AdminRoadFeatureAnalysis: React.FC = () => {
   const [roadData, setRoadData] = useState<any[]>([]); // Array of street data
   const [featureCombinations, setFeatureCombinations] = useState<any>({}); // Store feature combinations with severity
-  const [selectedStreet, setSelectedStreet] = useState('00-199 FAIR LAWN PKWY');
+  const [selectedStreet, setSelectedStreet] = useState('BRICE RD,REYNOLDSBURG,FRANKLIN');
   const [searchTerm, setSearchTerm] = useState(''); // Used to filter the streets while typing
   const [accidentRisk, setAccidentRisk] = useState<number | null>(null); // Updated to handle null value
   const [streetNames, setStreetNames] = useState<string[]>([]); // To store all street names
@@ -32,7 +32,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
     "Bump", "Crossing", "Give_Way", "Junction", "No_Exit", "Railway", "Roundabout", "Station", "Stop", "Traffic_Calming", "Traffic_Signal"
   ];
 
-  // Fetch all street names
+
   useEffect(() => {
     fetch('http://localhost:8080/json/street_names')
       .then((response) => response.json())
@@ -43,30 +43,50 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
       .catch((error) => console.error('Error fetching street names:', error));
   }, []);
 
-  // Fetch road features with severity data
   useEffect(() => {
-    fetch(`http://localhost:8080/json/road_features_with_severity?street_name=${encodeURIComponent(selectedStreet)}`)
+    const [streetName, cityName, countyName] = selectedStreet.split(',');
+    console.log('Fetching road data for:', streetName, cityName, countyName);
+
+    fetch(`http://localhost:8080/json/road_features_with_severity?street_name=${encodeURIComponent(streetName)}&city_name=${encodeURIComponent(cityName)}&county_name=${encodeURIComponent(countyName)}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log('Fetched road data:', data); // Check the fetched data
-        setRoadData(data); // Set the fetched road data
+        console.log('Fetched road data:', data); // Log the road data
+        if (data && Array.isArray(data) && data.length > 0) {
+          setRoadData(data);
+        } else {
+          console.log('No data available for the selected street.');
+          setRoadData([]); // Set empty if no data
+        }
       })
-      .catch((error) => console.error('Error fetching the road feature data:', error));
+      .catch((error) => {
+        console.error('Error fetching road feature data:', error);
+        setRoadData([]); // Set empty if there is an error fetching
+      });
 
     // Fetch feature combinations data
     fetch('/average_severities_combinations.json')
       .then((response) => response.json())
       .then((data) => {
-        console.log('Fetched feature combinations:', data); // Check the fetched combinations
-        setFeatureCombinations(data); // Set the feature combinations data
+        console.log('Fetched feature combinations:', data); // Log the feature combinations data
+        if (data && Object.keys(data).length > 0) {
+          setFeatureCombinations(data);
+        } else {
+          console.log('No feature combinations data found.');
+          setFeatureCombinations({});
+        }
       })
-      .catch((error) => console.error('Error fetching the feature combinations data:', error));
+      .catch((error) => {
+        console.error('Error fetching the feature combinations data:', error);
+        setFeatureCombinations({});
+      });
   }, [selectedStreet]);
 
   const toggleFeature = (feature: string) => {
-    // Find the street data for the selected street and toggle the feature value
+    
     const updatedStreetData = roadData.map((streetData) => {
-      if (streetData.street_name === selectedStreet) {
+      const full_name = streetData.street_name+','+streetData.city_name+','+streetData.county_name;
+      if (full_name === selectedStreet) {
+        
         return {
           ...streetData,
           [feature]: !streetData[feature], // Toggle the feature value
@@ -74,221 +94,238 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
       }
       return streetData;
     });
-  
-    // Update the roadData state
     setRoadData(updatedStreetData);
   };
 
   useEffect(() => {
-    // After updating the road data, find the selected street's data
-    const selectedStreetData = roadData.find((data) => data.street_name === selectedStreet);
-  
-    // If the street data exists, update the activeFeatures
+    // console.log('test', roadData);
+    const selectedStreetData = roadData.find((data) => {
+      const [streetName, cityName, countyName] = selectedStreet.split(',');
+      // console.log('test 2', streetName, countyName, cityName);
+      return (
+        data.street_name === streetName &&
+        data.city_name === cityName &&
+        data.county_name === countyName
+      );
+    });
+
     if (selectedStreetData) {
+      // console.log('test', selectedStreetData);
       const newActiveFeatures = featureNames.filter(
         (feature) => selectedStreetData[feature] === true
       );
-  
+
       setActiveFeatures(newActiveFeatures); // Set the active features state
     }
-  }, [roadData, selectedStreet]); // Only trigger this effect when roadData or selectedStreet changes
+  }, [roadData, selectedStreet]); 
 
-  
- const calculateRisk = (selectedStreetData: any, featureCombinations: any): number => {
+  const calculateRisk = (selectedStreetData: any, featureCombinations: any): number => {
     console.log('Selected street data:', selectedStreetData);
-
-    // Create a list of active features (value of 1 for selected features)
-    const activeFeatureKeys = featureLabels
-      .map((feature) => selectedStreetData[feature] ? 1 : 0)
-      .map((value, index) => (value === 1 ? featureLabels[index] : null)) // Get feature names where value is 1
-      .filter((feature) => feature !== null); // Filter out null values
-
-    console.log('Active features selected:', activeFeatureKeys); // Debug: Active features being selected
-
-    // Default severity value if no features are selected
-    let predictedSeverity = 2; // Default value
-
-    // If no active features are selected, return the default severity value
+  
+    // Check if featureNames and selectedStreetData are populated
+    if (!featureNames || !Array.isArray(featureNames)) {
+      console.error('Error: featureNames is not an array.');
+      return 2;
+    }
+    
+    if (!selectedStreetData || typeof selectedStreetData !== 'object') {
+      console.error('Error: selectedStreetData is not a valid object.');
+      return 2;
+    }
+  
+    // Log feature names to verify if they match the keys in selectedStreetData
+    console.log('Feature Names:', featureNames);
+  
+    const activeFeatureKeys = featureNames
+    .filter((feature) => {
+      const featureKey = feature.toLowerCase();
+      const value = selectedStreetData[featureKey];
+      console.log(`Feature "${feature}" (normalized) value: ${value}`);
+      return value; // Ensure it's truthy (non-null, non-undefined)
+    })
+    .map((feature) => {
+      console.log(`Feature "${feature}" is active.`);
+      return feature;
+    });
+  
+  
+    console.log('Active features selected:', activeFeatureKeys);
+  
+    let predictedSeverity = 2;
+  
     if (activeFeatureKeys.length === 0) {
       console.log('No active features selected. Returning default severity of 2.');
       return predictedSeverity;
     }
-
-    // Normalize the feature names (capitalize the first letter of each word and join by ' AND ')
+  
     const normalizedFeatureKeys = activeFeatureKeys.map((feature) =>
-      feature!.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') // Non-null assertion here
+      feature.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
     );
-
-    // Create the combination string from selected active features
+  
     const featureCombination = normalizedFeatureKeys.join(' AND ') + ' = True';
-    console.log(`Checking combination: ${featureCombination}`); // Debug: Combination being checked
-
-    // Log all keys in the featureCombinations data to check for any discrepancies
+    console.log(`Checking combination: ${featureCombination}`);
+  
     console.log('Available feature combinations keys:', Object.keys(featureCombinations));
-
-    // Check if the normalized combination exists in the fetched featureCombinations data
+  
     if (featureCombinations[featureCombination]) {
       predictedSeverity = featureCombinations[featureCombination];
-      console.log(`Combination found: ${featureCombination} => Severity: ${predictedSeverity}`); // Debug: Combination found
+      console.log(`Combination found: ${featureCombination} => Severity: ${predictedSeverity}`);
     } else {
       console.log(`Combination not found: ${featureCombination}. Returning default severity of 2.`);
     }
-
-    // Final debug log: Return the calculated severity
+  
     console.log('Final predicted severity:', predictedSeverity);
     return predictedSeverity;
-};
-
-
+  };
   
+  
+
   const handlePredictSeverity = () => {
-    // Get the selected street data
-    const selectedStreetData = roadData.find((data) => data.street_name === selectedStreet);
+    const selectedStreetData = roadData.find((data) => {
+      const [streetName, cityName, countyName] = selectedStreet.split(',');
+      return (
+        data.street_name === streetName &&
+        data.city_name === cityName &&
+        data.county_name === countyName
+      );
+    });
+    console.log('setelected' ,selectedStreetData);
     if (selectedStreetData && featureCombinations) {
-      // Calculate the risk based on selected features and feature combinations
       const newSeverity = calculateRisk(selectedStreetData, featureCombinations);
-      setAccidentRisk(newSeverity); // Update the predicted severity
+      setAccidentRisk(newSeverity);
     }
   };
 
   const handleStreetChange = (newStreet: string) => {
-    setSelectedStreet(newStreet);
-    setSearchTerm(newStreet);
+    setSelectedStreet(newStreet.toUpperCase());
+    setSearchTerm(newStreet.toUpperCase());
   };
 
-  // Find the street data for the selected street
-  const selectedStreetData = roadData.find((data) => data.street_name === selectedStreet);
+  const selectedStreetData = roadData.find((data) => {
+    const [streetName, cityName, countyName] = selectedStreet.split(',');
+    return (
+      data.street_name === streetName &&
+      data.city_name === cityName &&
+      data.county_name === countyName
+    );
+  });
 
-  if (!selectedStreetData || !Object.keys(featureCombinations).length) {
+  if (!selectedStreetData) {
     return <Typography>Loading...</Typography>;
   }
 
   const featureLabels = Object.keys(selectedStreetData).filter(
-    (feature) => feature !== 'average_severity' && feature !== 'street_name'
+    (feature) => feature !== 'average_severity' && feature !== 'street_name' && feature !== 'city_name' && feature !== 'county_name'
   );
 
   const featureValues = featureLabels.map((feature) => (selectedStreetData[feature] ? 1 : 0));
 
+  console.log('Feature Labels:', featureLabels);
+  console.log('Feature Values:', featureValues);
+
   return (
-<Box sx={{ p: 2, display: 'flex', flexDirection: 'row', gap: 2 }}>
-  {/* Left Section */}
-  <Box sx={{ flex: 1 }}>
-    <Typography variant="h5" gutterBottom>
-      Road Feature Analysis
-    </Typography>
+    <Box sx={{ p: 3, display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center', backgroundColor: '#f9f9f9', borderRadius: '10px', boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)' }}>
+      <Box sx={{ flex: 1, maxWidth: '500px' }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#3f51b5', marginBottom: '15px' }}>
+          Road Feature Analysis
+        </Typography>
 
-    <FormControl fullWidth sx={{ mb: 2 }}>
-      <Autocomplete
-        options={streetNames} // Street names fetched from the API
-        value={selectedStreet} // The selected street value
-        onChange={(event, newValue) => {
-          if (newValue) {
-            handleStreetChange(newValue); // Update the selected street
-          }
-        }}
-        inputValue={searchTerm} // The input search term for filtering
-        onInputChange={(event, newInputValue) => {
-          setSearchTerm(newInputValue); // Update search term for input
-        }}
-        renderInput={(params) => (
-          <TextField {...params} label="Search and Select Street" variant="outlined" />
-        )}
-        getOptionLabel={(option) => option} // Ensure street name is displayed
-      />
-    </FormControl>
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <Autocomplete
+            options={streetNames}
+            value={selectedStreet}
+            onChange={(event, newValue) => newValue && handleStreetChange(newValue)}
+            inputValue={searchTerm}
+            onInputChange={(event, newInputValue) => setSearchTerm(newInputValue)}
+            renderInput={(params) => (
+              <TextField {...params} label="Search and Select Street" variant="outlined" sx={{ borderRadius: '5px', padding: '10px' }} />
+            )}
+            getOptionLabel={(option) => option}
+          />
+        </FormControl>
 
-    <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-      <Typography variant="subtitle1" gutterBottom>
-        Selected Street: {selectedStreet}
-      </Typography>
+        <Paper elevation={3} sx={{ p: 3, backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+          <Typography variant="h6" sx={{ fontSize: '1.2rem', marginBottom: '20px', color: '#333' }}>
+            Selected Street: {selectedStreet}
+          </Typography>
 
-      <FormGroup>
-        <Grid container spacing={1}>
-          {featureLabels.map((feature) => (
-            <Grid item xs={6} key={feature}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={selectedStreetData[feature]}
-                    onChange={() => toggleFeature(feature)}
+          <FormGroup>
+            <Grid container spacing={2}>
+              {featureLabels.map((feature) => (
+                <Grid item xs={6} key={feature}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={selectedStreetData[feature]}
+                        onChange={() => toggleFeature(feature)}
+                        sx={{ color: '#3f51b5' }}
+                      />
+                    }
+                    label={feature.charAt(0).toUpperCase() + feature.slice(1).replace(/_/g, ' ')}
                   />
-                }
-                label={feature.charAt(0).toUpperCase() + feature.slice(1).replace(/_/g, ' ')} // Correct label formatting
-              />
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
-      </FormGroup>
+          </FormGroup>
 
-      <Typography variant="subtitle1" gutterBottom sx={{ mt: 1, fontWeight: 'bold',color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',}}>
-        Current Severity: {selectedStreetData.average_severity}
-      </Typography>
+          <Typography variant="subtitle1" sx={{ mt: 2, fontWeight: 'bold', fontSize: '1.2rem', color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green' }}>
+            Current Severity: {selectedStreetData.average_severity}
+          </Typography>
+        </Paper>
+      </Box>
 
-    </Paper>
-  </Box>
-
-  {/* Right Section */}
-  <Box sx={{ flex: 1, display: 'block', flexDirection: 'column', alignItems: 'center', gap: 2, ml:10 }}>
-    <Box sx={{ width: '100%', maxWidth: 600 }}>
-      <Bar
-        data={{
-          labels: featureLabels, // All features will be shown on the X-axis
-          datasets: [
-            {
-              label: 'Road Features',
-              data: featureValues, // Only true features will have a bar value of 1
-              backgroundColor: 'rgba(75, 192, 192, 0.6)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1,
-            },
-          ],
-        }}
-        options={{
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1,
-                callback: (value) => (value === 1 ? 'Enabled' : 'Disabled'),
+      <Box sx={{ flex: 1, maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Box sx={{ width: '100%', maxWidth: 600 }}>
+          <Bar
+            data={{
+              labels: featureLabels,
+              datasets: [
+                {
+                  label: 'Road Features',
+                  data: featureValues,
+                  backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: 'top' } },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 1,
+                },
               },
-            },
-          },
-        }}
-        width={300}
-        height={200}
-      />
+            }}
+          />
+        </Box>
+
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handlePredictSeverity}
+            sx={{
+              width: '100%',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              backgroundColor: accidentRisk !== null && accidentRisk >= 3 ? '#e57373' : '#81c784',
+            }}
+            startIcon={<TrafficOutlined />}
+          >
+            Predict Accident Risk
+          </Button>
+
+          {accidentRisk !== null && (
+            <Typography variant="h6" sx={{ mt: 2, fontSize: '1.4rem', fontWeight: 'bold', textAlign: 'center', color: accidentRisk >= 3 ? 'red' : 'green' }}>
+              Predicted Severity: {accidentRisk}
+            </Typography>
+          )}
+        </Box>
+      </Box>
     </Box>
-    <Typography
-        variant="subtitle1"
-        gutterBottom
-        sx={{
-          mt: 1,
-          fontWeight: 'bold',
-          color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green',
-        }}
-      >
-  Predicted Severity: {accidentRisk !== null ? accidentRisk : 'N/A'}
-</Typography>
-    <Button variant="contained" color="primary" sx={{ padding: '10px 20px' }} startIcon={<TrafficOutlined />} onClick={handlePredictSeverity}>
-        Predicted Severity
-    </Button>
-
-
-    {/* <Button
-      variant="contained"
-      color="primary"
-      sx={{ mt: 2, ml: 20  }}
-      startIcon={<TrafficOutlined />}
-    >
-      Simulate Traffic Changes
-    </Button> */}
-  </Box>
-</Box>
-
-    
   );
 };
-
 export default AdminRoadFeatureAnalysis;
