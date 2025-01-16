@@ -77,36 +77,19 @@ type StreetData struct {
 	Weather      WeatherData `json:"weather"`
 }
 
-const apiKey = "AIzaSyCaLb77xg07_K1JGOV6szhoQqVOn5uUAuo"
-
-type DirectionsResponse struct {
-	Routes []Route `json:"routes"`
+type RouteData struct {
+	StartLocation string   `json:"start_location"`
+	Destination   string   `json:"destination"`
+	StartLatLng   LatLng   `json:"start_lat_lng"`
+	EndLatLng     LatLng   `json:"end_lat_lng"`
+	RoutePoints   []LatLng `json:"route_points"`
+	Distance      string   `json:"distance"`
+	Duration      string   `json:"duration"`
 }
 
-type Route struct {
-	Legs []Leg `json:"legs"`
-}
-
-type Leg struct {
-	Steps []Step `json:"steps"`
-}
-
-type Step struct {
-	StartLocation Location `json:"start_location"`
-	EndLocation   Location `json:"end_location"`
-}
-
-type Location struct {
+type LatLng struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
-}
-
-type ReverseGeocodingResponse struct {
-	Results []GeocodingResult `json:"results"`
-}
-
-type GeocodingResult struct {
-	FormattedAddress string `json:"formatted_address"`
 }
 
 var db *sql.DB
@@ -147,10 +130,97 @@ func main() {
 		c.JSON(http.StatusOK, data)
 	})
 	router.GET("/json/geolocation", GetGeoLocation)
-	router.GET("/json/getroutedata", generateRouteData)
+	router.GET("/json/route", func(c *gin.Context) {
+		apiKey := "" // Replace with your API key
+		origin := c.DefaultQuery("origin", "")
+		destination := c.DefaultQuery("destination", "")
+
+		if origin == "" || destination == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "origin and destination parameters are required",
+			})
+			return
+		}
+
+		routeData, err := getRouteData(apiKey, origin, destination)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, routeData)
+	})
 
 	fmt.Println("Server is running on port 8085")
 	log.Fatal(http.ListenAndServe(":8085", router))
+}
+
+func getRouteData(apiKey, origin, destination string) (*RouteData, error) {
+	baseURL := "https://maps.googleapis.com/maps/api/directions/json"
+	params := url.Values{}
+	params.Add("origin", origin)
+	params.Add("destination", destination)
+	params.Add("key", apiKey)
+
+	reqURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+	resp, err := http.Get(reqURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %v", err)
+	}
+
+	var data struct {
+		Routes []struct {
+			Legs []struct {
+				StartLocation LatLng `json:"start_location"`
+				EndLocation   LatLng `json:"end_location"`
+				Steps         []struct {
+					StartLocation LatLng `json:"start_location"`
+					EndLocation   LatLng `json:"end_location"`
+				} `json:"steps"`
+				Distance struct {
+					Text string `json:"text"`
+				} `json:"distance"`
+				Duration struct {
+					Text string `json:"text"`
+				} `json:"duration"`
+			} `json:"legs"`
+		} `json:"routes"`
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	if len(data.Routes) == 0 || len(data.Routes[0].Legs) == 0 {
+		return nil, fmt.Errorf("no routes found")
+	}
+
+	leg := data.Routes[0].Legs[0]
+	routePoints := []LatLng{}
+	for _, step := range leg.Steps {
+		routePoints = append(routePoints, step.StartLocation, step.EndLocation)
+	}
+
+	routeData := &RouteData{
+		StartLocation: origin,
+		Destination:   destination,
+		StartLatLng:   leg.StartLocation,
+		EndLatLng:     leg.EndLocation,
+		RoutePoints:   routePoints,
+		Distance:      leg.Distance.Text,
+		Duration:      leg.Duration.Text,
+	}
+
+	return routeData, nil
 }
 
 func formatToTwoDecimalPlaces(value float64) string {
@@ -636,171 +706,4 @@ func GetGeoLocation(c *gin.Context) {
 		"latitude":  latitude,
 		"longitude": longitude,
 	})
-}
-
-// func generateRouteData(starting, destination string) (map[string]StreetData, error) {
-// 	locations := map[string][2]float64{
-// 		"BRICE%20RD": {39.963948881549136, -82.82847833227663},
-// 		"MAIN%20ST":  {43.689040750000004, -79.30162111836233},
-// 		"PARK%20AVE": {40.811797284722154, -73.93095958221829},
-// 		"OAK%20DR":   {49.39040391792303, -98.88972155764887},
-// 	}
-
-// 	result := make(map[string]StreetData)
-
-// 	for streetName, coords := range locations {
-// 		url := fmt.Sprintf(
-// 			"http://localhost:8080/json/road_features_with_weather?street_name=%s&latitude=%f&longitude=%f",
-// 			streetName, coords[0], coords[1],
-// 		)
-// 		log.Printf("Sending GET request to: %s\n", url)
-
-// 		resp, err := http.Get(url)
-// 		if err != nil {
-// 			log.Printf("HTTP GET error for %s: %v\n", streetName, err)
-// 			continue
-// 		}
-// 		defer resp.Body.Close()
-
-// 		if resp.StatusCode != http.StatusOK {
-// 			log.Printf("Non-OK HTTP status for %s: %d\n", streetName, resp.StatusCode)
-// 			continue
-// 		}
-
-// 		body, err := ioutil.ReadAll(resp.Body)
-// 		if err != nil {
-// 			log.Printf("Error reading response body for %s: %v\n", streetName, err)
-// 			continue
-// 		}
-// 		log.Printf("Response body for %s: %s\n", streetName, string(body))
-
-// 		var streetData StreetData
-// 		err = json.Unmarshal(body, &streetData)
-// 		if err != nil {
-// 			log.Printf("JSON Unmarshal error for %s: %v\n", streetName, err)
-// 			continue
-// 		}
-
-// 		log.Printf("Parsed data for %s: %+v\n", streetName, streetData)
-// 		result[streetName] = streetData
-// 	}
-
-// 	if len(result) == 0 {
-// 		return nil, fmt.Errorf("no valid data received for any street")
-// 	}
-
-// 	return result, nil
-// }
-
-// func getStartingDestinationDataHandler(c *gin.Context) {
-// 	starting := c.DefaultQuery("starting", "")
-// 	destination := c.DefaultQuery("destination", "")
-
-// 	if starting == "" || destination == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Both 'starting' and 'destination' parameters are required"})
-// 		return
-// 	}
-
-// 	data, err := generateRouteData(starting, destination)
-// 	if err != nil {
-// 		log.Printf("Error generating route data: %v\n", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, data)
-// }
-
-func generateRouteData(c *gin.Context) {
-	// Get origin and destination from query parameters
-	origin := c.DefaultQuery("origin", "")
-	destination := c.DefaultQuery("destination", "")
-
-	// Validate if origin and destination are provided
-	if origin == "" || destination == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Origin and Destination are required"})
-		return
-	}
-
-	// URL encode the origin and destination to safely include them in the URL
-	encodedOrigin := url.QueryEscape(origin)
-	encodedDestination := url.QueryEscape(destination)
-
-	// Prepare the Google Maps Directions API URL
-	url := fmt.Sprintf("https://maps.googleapis.com/maps/api/directions/json?origin=%s&destination=%s&key=%s", encodedOrigin, encodedDestination, apiKey)
-
-	// Make the API request
-	resp, err := http.Get(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to make API request"})
-		return
-	}
-	defer resp.Body.Close()
-
-	// Check if the response status is OK (200)
-	if resp.StatusCode != http.StatusOK {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get valid response from Google Maps API", "status": resp.Status})
-		return
-	}
-
-	// Parse the JSON response
-	var directionsResponse DirectionsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&directionsResponse); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode API response"})
-		return
-	}
-
-	// Extract geo locations from the route's steps
-	var geoLocations []Location
-	for _, route := range directionsResponse.Routes {
-		for _, leg := range route.Legs {
-			for _, step := range leg.Steps {
-				geoLocations = append(geoLocations, step.StartLocation, step.EndLocation)
-			}
-		}
-	}
-
-	// Get street names by reverse geocoding the geo locations
-	var streetNames []string
-	for _, location := range geoLocations {
-		streetName, err := reverseGeocode(location)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reverse geocode location"})
-			return
-		}
-		streetNames = append(streetNames, streetName)
-	}
-
-	// Return the street names as a JSON response
-	c.JSON(http.StatusOK, gin.H{"street_names": streetNames})
-}
-
-func reverseGeocode(location Location) (string, error) {
-	// Prepare the Google Maps Geocoding API URL
-	geocodeURL := fmt.Sprintf("https://maps.googleapis.com/maps/api/geocode/json?latlng=%f,%f&key=%s", location.Lat, location.Lng, apiKey)
-
-	// Make the API request for reverse geocoding
-	resp, err := http.Get(geocodeURL)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Check if the response status is OK (200)
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Failed to get valid response from Google Maps Geocoding API")
-	}
-
-	// Parse the reverse geocoding response
-	var geocodingResponse ReverseGeocodingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&geocodingResponse); err != nil {
-		return "", err
-	}
-
-	// Return the formatted address (street name)
-	if len(geocodingResponse.Results) > 0 {
-		return geocodingResponse.Results[0].FormattedAddress, nil
-	}
-
-	return "", fmt.Errorf("No results found for the location")
 }
