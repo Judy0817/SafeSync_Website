@@ -25,6 +25,13 @@ const (
 	sslmode  = "disable"
 )
 
+type RoadFeatureWithGeo struct {
+	StreetName  string          `json:"street_name"`
+	CityName    string          `json:"city_name"`
+	CountyName  string          `json:"county_name"`
+	GeoLocation json.RawMessage `json:"geo_location"` // Optional: store geo-location data as JSON
+}
+
 // RoadFeature represents the structure of a row in the database
 type RoadFeatureWIthSeverity struct {
 	StreetName      string  `json:"street_name"`
@@ -153,8 +160,71 @@ func main() {
 		c.JSON(http.StatusOK, routeData)
 	})
 
+	router.GET("/json/nearby_road_info", GetNearbyRoadInfo)
+
 	fmt.Println("Server is running on port 8085")
 	log.Fatal(http.ListenAndServe(":8085", router))
+}
+
+func GetNearbyRoadInfo(c *gin.Context) {
+	// Get latitude and longitude from query parameters
+	latitude := c.DefaultQuery("latitude", "")
+	longitude := c.DefaultQuery("longitude", "")
+
+	// Check if both latitude and longitude are provided
+	if latitude == "" || longitude == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Latitude and longitude are required"})
+		return
+	}
+
+	// Convert latitude and longitude to float64
+	lat, err := strconv.ParseFloat(latitude, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid latitude value"})
+		return
+	}
+
+	lon, err := strconv.ParseFloat(longitude, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid longitude value"})
+		return
+	}
+
+	// Query to find the nearest street, city, and county based on the provided latitude and longitude
+	query := `
+        SELECT street_name, city, county
+		FROM street_geo_locations
+		WHERE ST_DWithin(
+			geo_locations::ST_TEXTFROMGEOGRAPHY,  -- Change to geometry type
+			ST_SetSRID(ST_Point($1, $2), 4326)::ST_TEXTFROMGEOGRAPHY,  -- Change to geometry type
+			1000)  -- 1000 meters radius for proximity
+		ORDER BY ST_Distance(geo_locations::ST_TEXTFROMGEOGRAPHY, ST_SetSRID(ST_Point($1, $2), 4326)::ST_TEXTFROMGEOGRAPHY)
+		LIMIT 1;`
+
+	// Execute the query
+	row := db.QueryRow(query, lon, lat)
+
+	// Prepare to scan the result into the structure
+	var streetName, cityName, countyName string
+	err = row.Scan(&streetName, &cityName, &countyName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No nearby road info found
+			c.JSON(http.StatusNotFound, gin.H{"error": "No nearby road info found"})
+		} else {
+			// Internal server error
+			log.Fatal("Error fetching data:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
+		}
+		return
+	}
+
+	// Respond with JSON for the closest street, city, and county
+	c.JSON(http.StatusOK, gin.H{
+		"street_name": streetName,
+		"city_name":   cityName,
+		"county_name": countyName,
+	})
 }
 
 func getRouteData(apiKey, origin, destination string) (*RouteData, error) {

@@ -22,7 +22,7 @@ CREATE TABLE road_features_with_severity (
 
 SELECT * FROM road_features_with_severity;
 
-SELECT * FROM road_features_with_severity WHERE street_name = 'BRICE RD' AND city_name = 'REYNOLDSBURG' AND county_name = 'FRANKLIN';
+SELECT * FROM road_features_with_severity WHERE street_name = 'FRANTZ RD' AND city_name = 'DUBLIN' AND county_name = 'FRANKLIN';
 
 
 SELECT * FROM street_geo_locations;
@@ -35,4 +35,9 @@ CREATE TABLE street_geo_locations (
     county VARCHAR(255),
     geo_locations JSONB
 );
+
+SELECT PostGIS_full_version();
+
+CREATE EXTENSION postgis;
+
 
