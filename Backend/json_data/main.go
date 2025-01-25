@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -160,71 +161,174 @@ func main() {
 		c.JSON(http.StatusOK, routeData)
 	})
 
-	router.GET("/json/nearby_road_info", GetNearbyRoadInfo)
+	router.GET("/json/nearby_road_info", GetNearbyLocations)
 
 	fmt.Println("Server is running on port 8085")
 	log.Fatal(http.ListenAndServe(":8085", router))
 }
 
-func GetNearbyRoadInfo(c *gin.Context) {
-	// Get latitude and longitude from query parameters
-	latitude := c.DefaultQuery("latitude", "")
-	longitude := c.DefaultQuery("longitude", "")
+// Location struct to hold street name, city, county
+type Location struct {
+	StreetName string `json:"street_name"`
+	City       string `json:"city"`
+	County     string `json:"county"`
+}
 
-	// Check if both latitude and longitude are provided
-	if latitude == "" || longitude == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Latitude and longitude are required"})
+// Default location data if no results are found
+var defaultLocation = Location{
+	StreetName: "Frantz Rd",
+	City:       "Dublin",
+	County:     "Franklin",
+}
+
+// HaversineDistance calculates the distance between two lat/lon points
+func HaversineDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	const EarthRadiusKm = 6371.0
+
+	dlat := (lat2 - lat1) * math.Pi / 180.0
+	dlon := (lon2 - lon1) * math.Pi / 180.0
+
+	a := math.Sin(dlat/2)*math.Sin(dlat/2) + math.Cos(lat1*math.Pi/180.0)*math.Cos(lat2*math.Pi/180.0)*math.Sin(dlon/2)*math.Sin(dlon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return EarthRadiusKm * c
+}
+
+// GetNearbyLocations is the handler for /json/nearby_road_info
+func GetNearbyLocations(c *gin.Context) {
+	// Get latitude, longitude, and radius from the query parameters
+	userLatStr := c.DefaultQuery("latitude", "")
+	userLonStr := c.DefaultQuery("longitude", "")
+	radiusStr := c.DefaultQuery("radius", "")
+
+	if userLatStr == "" || userLonStr == "" || radiusStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
 		return
 	}
 
-	// Convert latitude and longitude to float64
-	lat, err := strconv.ParseFloat(latitude, 64)
+	// Convert query parameters to float64
+	userLat, err := strconv.ParseFloat(userLatStr, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid latitude value"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid latitude"})
 		return
 	}
 
-	lon, err := strconv.ParseFloat(longitude, 64)
+	userLon, err := strconv.ParseFloat(userLonStr, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid longitude value"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid longitude"})
 		return
 	}
 
-	// Query to find the nearest street, city, and county based on the provided latitude and longitude
-	query := `
-        SELECT street_name, city, county
-		FROM street_geo_locations
-		WHERE ST_DWithin(
-			geo_locations::ST_TEXTFROMGEOGRAPHY,  -- Change to geometry type
-			ST_SetSRID(ST_Point($1, $2), 4326)::ST_TEXTFROMGEOGRAPHY,  -- Change to geometry type
-			1000)  -- 1000 meters radius for proximity
-		ORDER BY ST_Distance(geo_locations::ST_TEXTFROMGEOGRAPHY, ST_SetSRID(ST_Point($1, $2), 4326)::ST_TEXTFROMGEOGRAPHY)
-		LIMIT 1;`
-
-	// Execute the query
-	row := db.QueryRow(query, lon, lat)
-
-	// Prepare to scan the result into the structure
-	var streetName, cityName, countyName string
-	err = row.Scan(&streetName, &cityName, &countyName)
+	radius, err := strconv.ParseFloat(radiusStr, 64)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			// No nearby road info found
-			c.JSON(http.StatusNotFound, gin.H{"error": "No nearby road info found"})
-		} else {
-			// Internal server error
-			log.Fatal("Error fetching data:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid radius"})
+		return
+	}
+
+	// Fetch nearby locations from the database
+	nearbyLocation, err := fetchNearbyLocations(userLat, userLon, radius)
+	if err != nil {
+		log.Println("Error fetching data:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching data"})
+		return
+	}
+
+	// If no nearby location is found, return the default location
+	if nearbyLocation.StreetName == "" {
+		nearbyLocation = defaultLocation
+	}
+
+	// Return the nearby location (or default) as JSON
+	c.JSON(http.StatusOK, nearbyLocation)
+}
+
+// fetchNearbyLocations fetches locations from the database and checks for nearby geo locations
+func fetchNearbyLocations(userLat, userLon, radius float64) (Location, error) {
+	// Build the PostgreSQL connection string
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode)
+
+	// Open the database connection
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Println("Error connecting to the database:", err)
+		return Location{}, err
+	}
+	defer db.Close()
+
+	// Sample query, replace with your actual DB query
+	query := `SELECT street_name, city, county, geo_locations FROM street_geo_locations`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Println("Error executing query:", err)
+		return Location{}, err
+	}
+	defer rows.Close()
+
+	// Initialize the result
+	var foundLocation Location
+
+	for rows.Next() {
+		var street, city, county string
+		var geoJSON string
+
+		// Scan row data
+		err := rows.Scan(&street, &city, &county, &geoJSON)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			return Location{}, err
 		}
-		return
+
+		// Parse geo_locations JSON (with string lat/lon)
+		var geoLocations []struct {
+			Lat string `json:"lat"`
+			Lon string `json:"lon"`
+		}
+		err = json.Unmarshal([]byte(geoJSON), &geoLocations)
+		if err != nil {
+			log.Println("Error unmarshalling geo_locations JSON:", err)
+			return Location{}, err
+		}
+
+		// Loop through each geo location and check if it's within the radius
+		for _, geo := range geoLocations {
+			lat, err := strconv.ParseFloat(geo.Lat, 64)
+			if err != nil {
+				log.Println("Error parsing lat:", geo.Lat)
+				continue
+			}
+
+			lon, err := strconv.ParseFloat(geo.Lon, 64)
+			if err != nil {
+				log.Println("Error parsing lon:", geo.Lon)
+				continue
+			}
+
+			distance := HaversineDistance(userLat, userLon, lat, lon)
+			if distance <= radius {
+				// If nearby, store the location details
+				foundLocation = Location{
+					StreetName: street,
+					City:       city,
+					County:     county,
+				}
+				break // Exit after finding the first nearby location
+			}
+		}
+
+		// If a location has been found, stop further processing
+		if foundLocation.StreetName != "" {
+			break
+		}
 	}
 
-	// Respond with JSON for the closest street, city, and county
-	c.JSON(http.StatusOK, gin.H{
-		"street_name": streetName,
-		"city_name":   cityName,
-		"county_name": countyName,
-	})
+	if err := rows.Err(); err != nil {
+		log.Println("Error iterating over rows:", err)
+		return Location{}, err
+	}
+
+	// Return the found location or empty Location if not found
+	return foundLocation, nil
 }
 
 func getRouteData(apiKey, origin, destination string) (*RouteData, error) {

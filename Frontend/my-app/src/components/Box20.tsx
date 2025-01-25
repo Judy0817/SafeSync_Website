@@ -55,10 +55,10 @@ const AccidentSeverityGraph: React.FC = () => {
         const severityIndex = severity - 1; // Adjust for 0-based index
         
         setGraphData({
-            labels: ['Humidity', 'Temperature', 'Visibility', 'Wind Speed'],
+            labels: ['Anuradhapura', 'Hambanthota', 'Vavuniya', 'Gampaha'],
             datasets: [
                 {
-                    label: `Weather Conditions for Severity ${severity}`,
+                    label: `No of Problems `,
                     data: [
                         data.humidities[severityIndex],
                         data.temperatures[severityIndex],
@@ -123,13 +123,13 @@ const AccidentSeverityGraph: React.FC = () => {
 
     return (
         <div className="container3">
-            <h1 className="box1-topic">Weather Conditions for Selected Severity</h1>
-            <select value={selectedSeverity} onChange={handleSeverityChange}>
-                <option value="1">Severity 1</option>
-                <option value="2">Severity 2</option>
-                <option value="3">Severity 3</option>
-                <option value="4">Severity 4</option>
-            </select>
+            <h1 className="box1-topic">No of Problems Districts Wise</h1>
+            {/* <select value={selectedSeverity} onChange={handleSeverityChange}>
+                <option value="1">Demand 1</option>
+                <option value="2">Demand 2</option>
+                <option value="3">Demand 3</option>
+                <option value="4">Demand 4</option>
+            </select> */}
             <div className="chart-Line">
                 {graphData && <Bar data={graphData} options={options} />}
             </div>

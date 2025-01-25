@@ -70,18 +70,22 @@ const AccidentGraphs: React.FC = () => {
   };
 
   return (
+    <div className="container3">
+      <h1 className="box1-topic">Droughts Frequency Over the Years </h1>
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      
       <div className="dashboard-box3-in">
-        <h3 className="box1-topic">Accidents in 2019</h3>
+        <h3 className="box1-topic">Frequency in 2019</h3>
         {data2019 && <Line data={data2019} options={options} />}
       </div>
       <div className="dashboard-box3-in">
-        <h3 className="box1-topic">Accidents in 2020</h3>
+        <h3 className="box1-topic">Frequency in 2020</h3>
         {data2020 && <Line data={data2020} options={options} />}
       </div>
       <div className="dashboard-box3-in">
-        <h3 className="box1-topic">Accidents in 2021</h3>
+        <h3 className="box1-topic">Frequency in 2021</h3>
         {data2021 && <Line data={data2021} options={options} />}
+      </div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ const AccidentGraphs: React.FC = () => {
           labels: response.data.labels,
           datasets: [
             {
-              label: `Accidents in ${year}`,
+              label: `Reports in ${year}`,
               data: response.data.data,
               borderColor: year === 2019 ? '#1E90FF' : year === 2020 ? '#32CD32': year === 2021 ? '#32CD32': year === 2022 ? '#32CD32' : '#FF4500',
               backgroundColor: year === 2019 
@@ -56,7 +56,7 @@ const AccidentGraphs: React.FC = () => {
 
   return (
     <div className="container3">
-      <h1 className="box1-topic">Accidents in {selectedYear}</h1>
+      <h1 className="box1-topic">No of Reports in {selectedYear} Moderates Over time</h1>
         <div>
           <label htmlFor="type-select">Select Year: </label>
           <select

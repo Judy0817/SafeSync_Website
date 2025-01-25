@@ -126,7 +126,7 @@ const Box2: React.FC = () => {
       setData({
         labels: responseData.labels,
         datasets: [{
-          label: selectedType === 'city' ? 'Accidents in Top 20 Cities' : 'Accidents on Top 20 Streets',
+          label: selectedType === 'city' ? 'water Sources By  Top 20 Cities' : 'Accidents on Top 20 Streets',
           data: responseData.data,
           backgroundColor: 'rgba(153, 102, 255, 0.5)',
           borderColor: 'rgb(153, 102, 255)',
@@ -162,7 +162,7 @@ const Box2: React.FC = () => {
 
   return (
     <div className="container3">
-      <h1 className="box1-topic">Total Accident Data In City and Street</h1>
+      <h1 className="box1-topic">No of functional water sources By City </h1>
 
       <div>
         <label htmlFor="type-select">Select Type:</label>

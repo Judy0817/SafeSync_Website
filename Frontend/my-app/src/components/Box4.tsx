@@ -21,7 +21,7 @@ ChartJS.register(
 
   const Box3 = () => {
     const [data, setData] = useState({
-      labels: [],
+      labels:['Anuradhapura', 'Hambanthota', 'Vavuniya', 'Gampaha'],
       datasets: [{
         label: 'Percentage of Accidents Involving Different Road Features',
         data: [],
@@ -42,7 +42,7 @@ ChartJS.register(
         console.log('Fetched data:', responseData);
   
         setData({
-          labels: responseData.labels,
+          labels: ['Water scarcity', 'Water quality issues', 'Infrastructure and accebility issues', 'Inefficient water resoirce management'],
           datasets: [{
             label: '',
             data: responseData.data,
@@ -91,7 +91,7 @@ ChartJS.register(
 
     <div className="container_box3">
       <div className="container4">
-      <h1 className="box1-topic">Distribution of Accident Severity</h1> 
+      <h1 className="box1-topic">Types of Problems</h1> 
       <div className="chart-Pie">
         <Pie data={data} options={options}/>
       </div>

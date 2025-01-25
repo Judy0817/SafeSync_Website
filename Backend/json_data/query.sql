@@ -36,8 +36,6 @@ CREATE TABLE street_geo_locations (
     geo_locations JSONB
 );
 
-SELECT PostGIS_full_version();
-
 CREATE EXTENSION postgis;
 
 
