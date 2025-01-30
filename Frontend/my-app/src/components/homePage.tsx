@@ -5,8 +5,7 @@ import Box2 from './Box2'
 import Box4 from './Box4'
 import Box5 from './Box5'
 import Box3 from './Box3'
-import Box20 from './Box20'
-import Box7 from './Box7'
+import Box21 from './Box21'
 
 const HomePage = () => {
 
@@ -16,12 +15,12 @@ const HomePage = () => {
       <Header />
       <main>
       <div className='dashboard'>
-      <h1 className='heading_home'>Pure Flow Dashboard</h1>
+      <h1 className='heading_home'>US Road Accident Casualities Tracking Dashboard</h1>
       <h3 className='sub_heading_home'>Welcome to Your Dashboard</h3>
       
        <div className="dash1">
        <div className="dashboard-box1">
-          <Box20 />
+          <Box1 />
         </div>
 
         <div className="dashboard-box2">
@@ -33,12 +32,13 @@ const HomePage = () => {
         </div>
 
         <div className="dashboard-box4">
-          <Box7 />
+          <Box4 />
         </div>
 
-        <div className="dashboard-box5">
+        <div className="dashboard-box4">
           <Box5 />
         </div>
+       
        </div>
 
         

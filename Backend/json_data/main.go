@@ -594,8 +594,11 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 
 	// Query the database for the specific street name, city name, and county name
 	query := `
-        SELECT * FROM road_features_with_severity 
-        WHERE street_name = $1 AND city_name = $2 AND county_name = $3
+        SELECT street_name, city_name, county_name, bump, crossing, give_way, junction, 
+       no_exit, railway, roundabout, station, stop, traffic_calming, traffic_signal
+FROM road_features_with_severity
+WHERE street_name = $1 AND city_name = $2 AND county_name = $3;
+
     `
 	rows, err := db.Query(query, streetName, cityName, countyName)
 	if err != nil {
@@ -623,7 +626,6 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 			&feature.Stop,
 			&feature.TrafficCalming,
 			&feature.TrafficSignal,
-			&feature.AverageSeverity,
 		)
 		if err != nil {
 			log.Fatal("Error scanning data:", err)
@@ -681,7 +683,6 @@ func GetRoadFeaturesAndWeather(c *gin.Context) {
 			"wind_direction":    weatherDataFormatted["wind_direction"],
 			"wind_speed(mph)":   weatherDataFormatted["wind_speed(mph)"],
 			"precipitation(in)": weatherDataFormatted["precipitation(in)"],
-			"severity":          features[0].AverageSeverity,
 		},
 		"road_features": roadFeaturesFormatted,
 	}
@@ -767,7 +768,7 @@ func getWeatherDataFromAPI(c *gin.Context) (gin.H, error) {
 func calculateSeverity(weather WeatherData, road RoadFeature) float64 {
 	// For now, return a hardcoded severity of 2.0
 	// You can later add logic to adjust severity based on the input data
-	return 5.0
+	return 1.0
 }
 
 func CalculateSeverity(c *gin.Context) {
