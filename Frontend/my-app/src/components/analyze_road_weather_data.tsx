@@ -165,7 +165,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
           }}
         />
         <Typography variant="subtitle1" color={accidentRisk && accidentRisk > 3 ? 'error' : 'primary'}  gutterBottom sx={{ mt: 1, fontWeight: 'bold'}}>
-          Predicted Severity: {accidentRisk || 'N/A'}
+          Predicted Severity: {accidentRisk?.toFixed(3) || 'N/A'}
         </Typography>
         <Button
             variant="contained"

@@ -269,7 +269,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
           </FormGroup>
 
           <Typography variant="subtitle1" sx={{ mt: 2, fontWeight: 'bold', fontSize: '1.2rem', color: accidentRisk !== null && accidentRisk >= 3 ? 'red' : 'green' }}>
-            Current Severity: {selectedStreetData.average_severity}
+            Current Severity: {parseFloat(selectedStreetData.average_severity).toFixed(3)}
           </Typography>
         </Paper>
       </Box>
@@ -320,7 +320,7 @@ const AdminRoadFeatureAnalysis: React.FC = () => {
 
           {accidentRisk !== null && (
             <Typography variant="h6" sx={{ mt: 2, fontSize: '1.4rem', fontWeight: 'bold', textAlign: 'center', color: accidentRisk >= 3 ? 'red' : 'green' }}>
-              Predicted Severity: {accidentRisk}
+              Predicted Severity: {accidentRisk.toFixed(3)}
             </Typography>
           )}
         </Box>

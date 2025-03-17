@@ -158,48 +158,52 @@ const RoadWeatherSearch: React.FC = () => {
       
 
       {roadWeatherData && (
-        <div>
-          <h3 style={{ textAlign: 'center', color: '#28a745', marginBottom: '20px'}} >Road Features for {selectedStreet}</h3>
-          {calculatedSeverity !== null ? (
-              calculatedSeverity > 2 ? (
-                <div style={{ textAlign: 'start', color: 'red', fontWeight: 'bold', marginTop: '20px' }}>
-                  <h2>⚠️ Warning: High Severity (Severity: {calculatedSeverity})</h2>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'start', color: 'green', fontWeight: 'bold', marginTop: '20px' }}>
-                  <h2>✅ Severity is normal (Severity: {calculatedSeverity})</h2>
-                </div>
-              )
-            ) : null}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between' }}>
-            {Object.entries(roadWeatherData.road_features).map(([feature, isEnabled], index) => (
-              <div key={index} style={{ flex: '0 0 30%', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-                <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{feature.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</h4>
-                <p>{isEnabled ? <span style={{ color: 'green' }}>✅</span> : <span style={{ color: 'red' }}>❌</span>}</p>
-              </div>
-            ))}
-          </div>
-          
-          <h3 style={{ textAlign: 'center', color: '#28a745', marginBottom: '20px'}} >Weather Conditions for {selectedStreet}</h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            {[
-              { title: 'Weather Condition', value: roadWeatherData.weather.weather_condition},
-              { title: 'Temperature', value: `${roadWeatherData.weather.temperature}°F` },
-              { title: 'Humidity', value: `${roadWeatherData.weather.humidity}%` },
-              { title: 'Wind Chill', value: `${roadWeatherData.weather.wind_chill}°F` },
-              { title: 'Pressure', value: `${roadWeatherData.weather.pressure} in` },
-              { title: 'Wind Direction', value: roadWeatherData.weather.wind_direction },
-              { title: 'Wind Speed', value: `${roadWeatherData.weather.wind_speed} mph` },
-            ].map((weather, index) => (
-              <div key={index} style={{ flex: '0 0 30%', marginBottom: '20px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-                <h4 style={{ color: '#007bff', marginBottom: '10px' }}>{weather.title}</h4>
-                <p>{weather.value}</p>
-              </div>
-            ))}
-          </div>
- 
+  <div style={{ padding: '10px', backgroundColor: '#f4f6f9', borderRadius: '10px' }}>
+    
+
+    {calculatedSeverity !== null && (
+      <div style={{ textAlign: 'center', fontWeight: 'bold', margin: '10px 0', padding: '10px', borderRadius: '8px', 
+        backgroundColor: calculatedSeverity > 3 ? '#ffcccc' : '#d4edda', color: calculatedSeverity > 3 ? '#d9534f' : '#155724' }}>
+        <h2>{calculatedSeverity > 3 ? `⚠️ High Severity (${calculatedSeverity.toFixed(3)})` : `✅ Normal Severity (${calculatedSeverity.toFixed(3)})`}</h2>
+      </div>
+    )}
+
+<h4 style={{ textAlign: 'center', color: '#28a745' }}>Road Features for {selectedStreet}</h4>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px', textAlign: 'center' }}>
+      {Object.entries(roadWeatherData.road_features).map(([feature, isEnabled], index) => (
+        <div key={index} style={{
+          padding: '10px', borderRadius: '8px', backgroundColor: isEnabled ? '#e6ffe6' : '#ffe6e6', 
+          border: `1px solid ${isEnabled ? '#28a745' : '#d9534f'}` }}>
+          <h4 style={{ color: '#007bff', fontSize: '14px' }}>{feature.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</h4>
+          <p style={{ fontSize: '16px' }}>{isEnabled ? '✅' : '❌'}</p>
         </div>
-      )}
+      ))}
+    </div>
+
+    <h4 style={{ textAlign: 'center', color: '#28a745', marginTop: '10px' }}>Weather Conditions for {selectedStreet}</h4>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px', textAlign: 'center' }}>
+      {[
+        { title: 'Condition', value: roadWeatherData.weather.weather_condition },
+        { title: 'Temp', value: `${roadWeatherData.weather.temperature}°F` },
+        { title: 'Humidity', value: `${roadWeatherData.weather.humidity}%` },
+        { title: 'Wind Chill', value: `${roadWeatherData.weather.wind_chill}°F` },
+        { title: 'Pressure', value: `${roadWeatherData.weather.pressure} in` },
+        { title: 'Wind Dir', value: roadWeatherData.weather.wind_direction },
+        { title: 'Wind Speed', value: `${roadWeatherData.weather.wind_speed} mph` },
+      ].map((weather, index) => (
+        <div key={index} style={{
+          padding: '10px', borderRadius: '8px', backgroundColor: '#e0f7fa', 
+          border: '1px solid #17a2b8' }}>
+          <h4 style={{ color: '#007bff', fontSize: '14px' }}>{weather.title}</h4>
+          <p style={{ fontSize: '14px' }}>{weather.value}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 };
