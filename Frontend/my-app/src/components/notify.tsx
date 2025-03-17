@@ -22,7 +22,7 @@ interface RoadWeatherData {
     severity: number;
     temperature: string;
     visibility: string;
-    weather: string; // Weather condition like "scattered clouds"
+    weather_condition: string; // Weather condition like "scattered clouds"
     wind_chill: string;
     wind_direction: string;
     wind_speed: string;
@@ -91,7 +91,7 @@ const RoadWeatherSearch: React.FC = () => {
           severity: roadWeatherData.weather["severity"],
           temperature: roadWeatherData.weather["temperature(F)"], // Correct mapping
           visibility: roadWeatherData.weather["visibility(mi)"],
-          weather: roadWeatherData.weather.weather,
+          weather_condition: roadWeatherData.weather.weather,
           wind_chill: roadWeatherData.weather["wind_chill(F)"],
           wind_direction: roadWeatherData.weather.wind_direction,
           wind_speed: roadWeatherData.weather["wind_speed(mph)"],
@@ -150,7 +150,7 @@ const RoadWeatherSearch: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          Get Weather Data
+          Get Severity
         </button>
       </Box>
 
@@ -183,7 +183,7 @@ const RoadWeatherSearch: React.FC = () => {
           <h3 style={{ textAlign: 'center', color: '#28a745', marginBottom: '20px'}} >Weather Conditions for {selectedStreet}</h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
             {[
-              { title: 'Weather Condition', value: roadWeatherData.weather.weather },
+              { title: 'Weather Condition', value: roadWeatherData.weather.weather_condition},
               { title: 'Temperature', value: `${roadWeatherData.weather.temperature}°F` },
               { title: 'Humidity', value: `${roadWeatherData.weather.humidity}%` },
               { title: 'Wind Chill', value: `${roadWeatherData.weather.wind_chill}°F` },

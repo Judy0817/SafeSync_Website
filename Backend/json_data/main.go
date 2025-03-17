@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -33,6 +34,10 @@ type RoadFeatureWithGeo struct {
 	GeoLocation json.RawMessage `json:"geo_location"` // Optional: store geo-location data as JSON
 }
 
+type SeverityResponse struct {
+	Severity string `json:"severity"`
+}
+
 // RoadFeature represents the structure of a row in the database
 type RoadFeatureWIthSeverity struct {
 	StreetName      string  `json:"street_name"`
@@ -54,17 +59,19 @@ type RoadFeatureWIthSeverity struct {
 
 // Define the RoadFeature struct
 type RoadFeature struct {
-	Bump           bool `json:"bump"`
-	Crossing       bool `json:"crossing"`
-	GiveWay        bool `json:"give_way"`
-	Junction       bool `json:"junction"`
-	NoExit         bool `json:"no_exit"`
-	Railway        bool `json:"railway"`
-	Roundabout     bool `json:"roundabout"`
-	Station        bool `json:"station"`
-	Stop           bool `json:"stop"`
-	TrafficCalming bool `json:"traffic_calming"`
-	TrafficSignal  bool `json:"traffic_signal"`
+	Bump            bool `json:"bump"`
+	Crossing        bool `json:"crossing"`
+	GiveWay         bool `json:"give_way"`
+	Junction        bool `json:"junction"`
+	NoExit          bool `json:"no_exit"`
+	Railway         bool `json:"railway"`
+	Roundabout      bool `json:"roundabout"`
+	Station         bool `json:"station"`
+	Stop            bool `json:"stop"`
+	TrafficCalming  bool `json:"traffic_calming"`
+	TrafficSignal   bool `json:"traffic_signal"`
+	Traffic_looping bool `json:"traffic_looping"`
+	Amenity         bool `json:"amenity"`
 }
 
 type WeatherData struct {
@@ -764,11 +771,84 @@ func getWeatherDataFromAPI(c *gin.Context) (gin.H, error) {
 	return weatherDataFormatted, nil
 }
 
-// Define the function to calculate severity based on weather and road data
 func calculateSeverity(weather WeatherData, road RoadFeature) float64 {
-	// For now, return a hardcoded severity of 2.0
-	// You can later add logic to adjust severity based on the input data
-	return 1.0
+	url := "http://127.0.0.1:5000/predict"
+
+	temp, _ := strconv.ParseFloat(weather.Temperature, 64)
+	windSpeed, _ := strconv.ParseFloat(weather.WindSpeed, 64)
+	//pressure, _ := strconv.ParseFloat(weather.Pressure, 64)
+	visibility, _ := strconv.ParseFloat(weather.Visibility, 64)
+	//windChill, _ := strconv.ParseFloat(weather.WindChill, 64)
+	humidity, _ := strconv.ParseFloat(weather.Humidity, 64)
+	precipitation, _ := strconv.ParseFloat(weather.Precipitation, 64)
+
+	requestBody := map[string]interface{}{
+		"Temperature(F)":    temp,
+		"Wind_Direction":    weather.WindDirection,
+		"Wind_Speed(mph)":   windSpeed,
+		"Pressure(in)":      29.92,
+		"Visibility(mi)":    visibility,
+		"Wind_Chill(F)":     70,
+		"Humidity(%)":       humidity,
+		"Precipitation(in)": precipitation,
+		"Weather_Condition": weather.Weather,
+		"Bump":              road.Bump,
+		"Crossing":          road.Crossing,
+		"Give_Way":          road.GiveWay,
+		"Junction":          road.Junction,
+		"No_Exit":           road.NoExit,
+		"Railway":           road.Railway,
+		"Roundabout":        road.Roundabout,
+		"Station":           road.Station,
+		"Stop":              road.Stop,
+		"Traffic_Calming":   road.TrafficCalming,
+		"Traffic_Signal":    road.TrafficSignal,
+		"Turning_Loop":      road.Traffic_looping,
+		"Amenity":           road.Amenity,
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return 0
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return 0
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return 0
+	}
+
+	// Use map[string]interface{} to handle different data types
+	var responseMap map[string]interface{}
+	err = json.Unmarshal(body, &responseMap)
+	if err != nil {
+		fmt.Println("Error unmarshalling response:", err)
+		return 0
+	}
+
+	severityValue, exists := responseMap["severity"]
+	if !exists {
+		fmt.Println("Severity key not found in response")
+		return 0
+	}
+
+	// Convert severity to float64
+	severity, ok := severityValue.(float64)
+	if !ok {
+		fmt.Println("Error converting severity to float")
+		return 0
+	}
+
+	return severity
+
 }
 
 func CalculateSeverity(c *gin.Context) {
@@ -777,7 +857,7 @@ func CalculateSeverity(c *gin.Context) {
 	pressure := c.DefaultQuery("pressure", "0")
 	windDirection := c.DefaultQuery("wind_direction", "")
 	windSpeed := c.DefaultQuery("wind_speed", "0")
-	//weather := c.DefaultQuery("weather", "")
+	weather_condition := c.DefaultQuery("weather_condition", "Clear")
 
 	bump := c.DefaultQuery("bump", "false") == "true"
 	crossing := c.DefaultQuery("crossing", "false") == "true"
@@ -791,30 +871,44 @@ func CalculateSeverity(c *gin.Context) {
 	trafficCalming := c.DefaultQuery("traffic_calming", "false") == "true"
 	trafficSignal := c.DefaultQuery("traffic_signal", "false") == "true"
 
+	wind_chill := c.DefaultQuery("wind_chill", "70")
+	humidity := c.DefaultQuery("humidity", "50")
+	visibility := c.DefaultQuery("visibility", "10")
+	precipitation := c.DefaultQuery("precipitation", "0")
+	trafficLooping := c.DefaultQuery("traffic_looping", "false") == "true"
+	amenity := c.DefaultQuery("Amenity", "false") == "true"
+
 	// Convert the extracted query parameters into the WeatherData and RoadFeature structs
-	weather := WeatherData{
+	weather_data := WeatherData{
 		Temperature:   temperature,
 		Pressure:      pressure,
 		WindDirection: windDirection,
 		WindSpeed:     windSpeed,
+		WindChill:     wind_chill,
+		Humidity:      humidity,
+		Visibility:    visibility,
+		Precipitation: precipitation,
+		Weather:       weather_condition,
 	}
 
 	road := RoadFeature{
-		Bump:           bump,
-		Crossing:       crossing,
-		GiveWay:        giveWay,
-		Junction:       junction,
-		NoExit:         noExit,
-		Railway:        railway,
-		Roundabout:     roundabout,
-		Station:        station,
-		Stop:           stop,
-		TrafficCalming: trafficCalming,
-		TrafficSignal:  trafficSignal,
+		Bump:            bump,
+		Crossing:        crossing,
+		GiveWay:         giveWay,
+		Junction:        junction,
+		NoExit:          noExit,
+		Railway:         railway,
+		Roundabout:      roundabout,
+		Station:         station,
+		Stop:            stop,
+		TrafficCalming:  trafficCalming,
+		TrafficSignal:   trafficSignal,
+		Traffic_looping: trafficLooping,
+		Amenity:         amenity,
 	}
 
 	// Calculate the severity
-	severity := calculateSeverity(weather, road)
+	severity := calculateSeverity(weather_data, road)
 
 	// Respond with the calculated severity
 	c.JSON(http.StatusOK, gin.H{

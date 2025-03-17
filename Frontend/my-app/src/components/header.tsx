@@ -22,6 +22,12 @@ const Header: React.FC = () => {
     navigate('/analyzeData');
 };
 
+const goToLoginPage = () => {
+
+  // This will navigate to second component
+  navigate('/');
+};
+
   return (
     <header>
       <div className="header-content">
@@ -241,7 +247,7 @@ const Header: React.FC = () => {
             <Link to="/notify"><FontAwesomeIcon icon={faBell} /></Link>
             <div className="list">
             <button onClick={goToAnalyzeData} className='button-analyzedata'>Analyze Data</button>
-            <button type="button" className='button-signOut'>Sign Out</button>
+            <button onClick={goToLoginPage} type="button" className='button-signOut'>Sign Out</button>
            
             </div>
             
