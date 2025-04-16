@@ -146,7 +146,7 @@ func main() {
 	})
 	router.GET("/json/geolocation", GetGeoLocation)
 	router.GET("/json/route", func(c *gin.Context) {
-		apiKey := "" // Replace with your API key
+		apiKey := "AIzaSyCxpU3bLfBm37Sf8Lz0SnhLxkQCgcszMZk" // Replace with your API key
 		origin := c.DefaultQuery("origin", "")
 		destination := c.DefaultQuery("destination", "")
 

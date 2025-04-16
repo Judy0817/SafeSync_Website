@@ -162,7 +162,7 @@ const Box2: React.FC = () => {
 
   return (
     <div className="container3">
-      <h1 className="box1-topic">No of functional water sources By City </h1>
+      <h1 className="box1-topic">Total Accident Data In City and Street</h1>
 
       <div>
         <label htmlFor="type-select">Select Type:</label>

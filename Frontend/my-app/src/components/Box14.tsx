@@ -14,7 +14,7 @@ import axios from 'axios';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const RoadFeaturesGraphs: React.FC = () => {
-    const [selectedStreet, setSelectedStreet] = useState<string>('I-10 E'); // Default street
+    const [selectedStreet, setSelectedStreet] = useState<string>('LITCHFIELD AVE,DAYTON,MONTGOMERY'); // Default street
     const [graphData, setGraphData] = useState<any>(null);
     const [roadFeaturesData, setRoadFeaturesData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +25,7 @@ const RoadFeaturesGraphs: React.FC = () => {
         const fetchRoadFeaturesData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/road/road_feature_street'); // Replace with your API URL
+                const response = await axios.get('http://localhost:8080/json/street_names'); // Replace with your API URL
                 const data = response.data;
                 setRoadFeaturesData(data.road_features); // Store the entire dataset
                 setLoading(false);

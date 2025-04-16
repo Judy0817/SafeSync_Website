@@ -4,6 +4,7 @@ import Box4 from './Box4'
 import Box12 from './Box12'
 import Box13 from './Box13'
 import Box14 from './Box14'
+import Box8 from './Box8'
 
 const RoadFeature = () => {
 
@@ -30,7 +31,7 @@ const RoadFeature = () => {
         </div>
 
         <div className="dashboard-box2">
-          <Box14 />
+          <Box8 />
         </div>
        </div>
 

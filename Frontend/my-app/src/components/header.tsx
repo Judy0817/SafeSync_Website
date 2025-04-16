@@ -44,6 +44,43 @@ const goToLoginPage = () => {
       )}
       
       <div className="main-topic"> DASHBOARDS</div>
+      <div className="main-topic">Different Dashboards</div>
+      <Link to="/severity_distribution" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Severity Distribution
+      </Link>
+      <Link to="/total_accident" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Accident Overview
+        
+      </Link>
+      <Link to="/weather" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Weather Impact Analysis
+        
+      </Link>
+      <Link to="/roadfeature" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Road Feature Analysis
+        
+      </Link>
+      <Link to="/timeAnalysis" className="sub-topic with-icon">
+        <span className="icon">
+          <FontAwesomeIcon icon={faLightbulb} />
+        </span>
+        Time Based Analysis
+        
+      </Link>
+
+
       <div className="main-topic"> Accident Overview</div>
       <Link to="/severity_distribution" className="sub-topic with-icon">
         <span className="icon">
@@ -146,42 +183,6 @@ const goToLoginPage = () => {
           <FontAwesomeIcon icon={faLightbulb} />
         </span>
         Holiday and Event Impact
-      </Link>
-
-
-
-
-
-
-
-      <div className="main-topic">Different Dashboards</div>
-      <Link to="/total_accident" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faLightbulb} />
-        </span>
-        Accident Overview
-        
-      </Link>
-      <Link to="/weather" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faLightbulb} />
-        </span>
-        Weather Impact Analysis
-        
-      </Link>
-      <Link to="/roadfeature" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faLightbulb} />
-        </span>
-        Road Feature Analysis
-        
-      </Link>
-      <Link to="/timeAnalysis" className="sub-topic with-icon">
-        <span className="icon">
-          <FontAwesomeIcon icon={faLightbulb} />
-        </span>
-        Time Based Analysis
-        
       </Link>
 
 
